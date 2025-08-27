@@ -1,0 +1,15 @@
+# /etc/systemd/system/camunda-update.service
+[Unit]
+Description=Camunda Update Service
+
+[Service]
+Type=oneshot
+User=camunda-deploy
+Group=camunda-deploy
+WorkingDirectory=/srv/camunda
+ExecStart=/srv/camunda/scripts/update-camunda.sh
+Environment=GIT_SSH_COMMAND="ssh -i /home/camunda-deploy/.ssh/camunda-deploy -o IdentitiesOnly=yes"
+ReadWritePaths=/srv/camunda
+ProtectSystem=strict
+NoNewPrivileges=yes
+PrivateTmp=yes

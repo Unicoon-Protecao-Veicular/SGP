@@ -1,1 +1,24 @@
 .DS_Store
+
+# Arquivos de ambiente com credenciais
+*.env
+.env.*
+!**/.env.example
+
+# Dados persistentes dos containers
+/dev/data/
+/dev/logs/
+/staging/data/
+/staging/logs/
+/backups/
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Logs do sistema
+*.log
+
+# Arquivos de IDE
+.idea/
+.vscode/
