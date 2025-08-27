@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  camunda-staging:
+    image: camunda/camunda-bpm-platform:${CAMUNDA_VERSION:-latest}
+    container_name: camunda-staging
+    hostname: camunda-staging
+    ports:
+      - "${STAGING_PORT:-8080}:8080"
+    env_file:
+      - .env
+    environment:
+      - DB_DRIVER=${DB_DRIVER}
+      - DB_URL=${DB_URL}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - CAMUNDA_ADMIN_USER=${CAMUNDA_ADMIN_USER}
+      - CAMUNDA_ADMIN_PASSWORD=${CAMUNDA_ADMIN_PASSWORD}
+    volumes:
+      - ./data:/camunda/database
+      - ./logs:/camunda/logs
+    restart: unless-stopped
+    depends_on:
+      - postgres-staging
+    networks:
+      - camunda-staging-net
+
+  postgres-staging:
+    image: postgres:13
+    container_name: postgres-staging
+    hostname: postgres-staging
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - pg-staging-data:/var/lib/postgresql/data
+    networks:
+      - camunda-staging-net
+    restart: unless-stopped
+
+volumes:
+  pg-staging-data:
+
+networks:
+  camunda-staging-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
