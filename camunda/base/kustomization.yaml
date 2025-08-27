@@ -9,8 +9,6 @@ helmCharts:
   valuesFile: values.yaml
   includeCRDs: true
 
-namespace: camunda
-
 configMapGenerator:
 - name: common-config
   literals:

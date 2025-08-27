@@ -61,6 +61,16 @@ identity:
     limits:
       cpu: "200m"
       memory: "512Mi"
+  auth:
+    enabled: true
+    clients:
+      - id: web-modeler
+        clientId: web-modeler
+        public: true
+        redirectUris:
+          - https://dev.unicoon.seudominio.com/modeler
+        webOrigins:
+          - https://dev.unicoon.seudominio.com
 
 keycloak:
   enabled: true
@@ -83,3 +93,22 @@ keycloak:
       limits:
         cpu: "300m"
         memory: "512Mi"
+
+webModeler:
+  enabled: true
+  webapp:
+    externalUrl: https://dev.unicoon.seudominio.com/modeler
+  api:
+    externalUrl: https://dev.unicoon.seudominio.com/modeler/api
+  identity:
+    baseUrl: https://dev.unicoon.seudominio.com/identity
+    clientId: web-modeler
+  database:
+    type: postgresql
+    host: camunda-dev-pg
+    port: 5432
+    name: webmodeler
+    user: webmodeler
+    passwordSecret:
+      name: webmodeler-db
+      key: password

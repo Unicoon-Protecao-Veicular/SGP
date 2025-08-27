@@ -14,6 +14,57 @@ spec:
   - to:
     - podSelector: {}
 ---
+# Permitir tráfego proveniente do controlador NGINX Ingress (namespace "ingress-nginx")
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-ingress-nginx
+spec:
+  podSelector: {}   # opcional: restrinja por label aos pods HTTP (operate/tasklist/identity/optimize)
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    ports:
+    - { protocol: TCP, port: 80 }
+    - { protocol: TCP, port: 443 }
+    - { protocol: TCP, port: 8080 } # caso seus Services exponham 8080 como targetPort
+---
+# Permitir DNS (kube-dns/CoreDNS)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - { protocol: UDP, port: 53 }
+    - { protocol: TCP, port: 53 }
+---
+# (Opcional) Egress para web (útil para baixar dependências, chamar APIs externas etc.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-web
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - { protocol: TCP, port: 80 }
+    - { protocol: TCP, port: 443 }
+---
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -25,16 +76,13 @@ spec:
     limits.cpu:   "0.8"
     requests.memory: 1.2Gi
     limits.memory:   2Gi
-
     # Quantidade de pods
     pods: "8"
-
     # Limites de objetos e armazenamento
     persistentvolumeclaims: "5"
     requests.storage: 20Gi
     requests.ephemeral-storage: 10Gi
     limits.ephemeral-storage:   10Gi
-
     # (opcional, mas útil em VPS)
     configmaps: "25"
     secrets:    "50"

@@ -14,6 +14,57 @@ spec:
   - to:
     - podSelector: {}
 ---
+# Permitir tráfego proveniente do controlador NGINX Ingress (namespace "ingress-nginx")
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-ingress-nginx
+spec:
+  podSelector: {}   # opcional: restrinja por label aos pods HTTP (operate/tasklist/identity/optimize)
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+    ports:
+    - { protocol: TCP, port: 80 }
+    - { protocol: TCP, port: 443 }
+    - { protocol: TCP, port: 8080 } # caso seus Services exponham 8080 como targetPort
+---
+# Permitir DNS (kube-dns/CoreDNS)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+    ports:
+    - { protocol: UDP, port: 53 }
+    - { protocol: TCP, port: 53 }
+---
+# (Opcional) Egress para web (útil para baixar dependências, chamar APIs externas etc.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-web
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - { protocol: TCP, port: 80 }
+    - { protocol: TCP, port: 443 }
+---
 apiVersion: v1
 kind: ResourceQuota
 metadata:

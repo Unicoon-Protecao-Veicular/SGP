@@ -5,46 +5,55 @@ metadata:
   namespace: camunda-dev
   annotations:
     kubernetes.io/ingress.class: nginx
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    # Se estiver usando Cert-Manager para TLS
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Se usar cert-manager:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Boas práticas para UIs do Camunda (websockets/requests longas)
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 spec:
+  ingressClassName: nginx
   rules:
-  - host: dev-camunda.seudominio.com
+  - host: dev.unicoon.seudominio.com
     http:
       paths:
-      - path: /
+      - path: /identity
         pathType: Prefix
         backend:
           service:
             name: camunda-dev-identity
             port:
               number: 80
-  - host: dev-operate.seudominio.com
-    http:
-      paths:
-      - path: /
+      - path: /operate
         pathType: Prefix
         backend:
           service:
             name: camunda-dev-operate
             port:
               number: 80
-  - host: dev-tasklist.seudominio.com
-    http:
-      paths:
-      - path: /
+      - path: /tasklist
         pathType: Prefix
         backend:
           service:
             name: camunda-dev-tasklist
             port:
               number: 80
+      - path: /modeler
+        pathType: Prefix
+        backend:
+          service:
+            name: camunda-dev-modeler
+            port:
+              number: 80
+      - path: /modeler/api
+        pathType: Prefix
+        backend:
+          service:
+            name: camunda-dev-modeler-api
+            port:
+              number: 80
   # Configuração TLS (se estiver usando Cert-Manager)
   tls:
   - hosts:
-    - dev-camunda.seudominio.com
-    - dev-operate.seudominio.com
-    - dev-tasklist.seudominio.com
+    - dev.unicoon.seudominio.com
     secretName: camunda-dev-tls
