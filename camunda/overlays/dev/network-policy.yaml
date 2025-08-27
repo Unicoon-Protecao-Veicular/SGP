@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-cross-namespace
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: dev-quota
+spec:
+  hard:
+    # CPU/Mem agregados no namespace
+    requests.cpu: "0.4"
+    limits.cpu:   "0.8"
+    requests.memory: 1.2Gi
+    limits.memory:   2Gi
+
+    # Quantidade de pods
+    pods: "8"
+
+    # Limites de objetos e armazenamento
+    persistentvolumeclaims: "5"
+    requests.storage: 20Gi
+    requests.ephemeral-storage: 10Gi
+    limits.ephemeral-storage:   10Gi
+
+    # (opcional, mas útil em VPS)
+    configmaps: "25"
+    secrets:    "50"

@@ -1,0 +1,61 @@
+global:
+  image:
+    tag: "8.2.0"
+  imagePullSecrets: []
+
+elasticsearch:
+  enabled: true
+  master:
+    replicas: 1
+    persistence:
+      enabled: false
+  data:
+    replicas: 1
+    persistence:
+      enabled: false
+
+zeebe:
+  clusterSize: 1
+  partitionCount: 1
+  replicationFactor: 1
+  pvcSize: 10Gi
+  service:
+    type: ClusterIP
+    port: 26500
+
+operate:
+  enabled: true
+  ingress:
+    enabled: false
+
+tasklist:
+  enabled: true
+  ingress:
+    enabled: false
+
+optimize:
+  enabled: true
+  ingress:
+    enabled: false
+
+identity:
+  enabled: true
+  ingress:
+    enabled: false
+
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    adminPassword: qhg1BYV.rzv_uxc2bue
+  postgresql:
+    enabled: true
+    auth:
+      username: keycloak
+      password: txp3dex3pkz-HYP5evc
+      database: keycloak
+
+gateway:
+  service:
+    type: ClusterIP
+    port: 8080

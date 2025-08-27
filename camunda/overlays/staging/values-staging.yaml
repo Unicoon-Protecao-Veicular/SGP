@@ -1,0 +1,85 @@
+global:
+  image:
+    tag: "8.2.0"
+
+zeebe:
+  clusterSize: 1
+  partitionCount: 1
+  replicationFactor: 1
+  pvcSize: 12Gi
+  broker:
+    resources:
+      requests:
+        cpu: "400m"
+        memory: "1Gi"
+      limits:
+        cpu: "700m"
+        memory: "1.5Gi"
+  gateway:
+    resources:
+      requests:
+        cpu: "150m"
+        memory: "512Mi"
+      limits:
+        cpu: "300m"
+        memory: "1Gi"
+
+operate:
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+tasklist:
+  resources:
+    requests:
+      cpu: "400m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+optimize:
+  enabled: true
+  resources:
+    requests:
+      cpu: "200m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+identity:
+  enabled: true
+  resources:
+    requests:
+      cpu: "150m"
+      memory: "512Mi"
+    limits:
+      cpu: "300m"
+      memory: "1Gi"
+
+keycloak:
+  enabled: true
+  resources:
+    requests:
+      cpu: "300m"
+      memory: "1Gi"
+    limits:
+      cpu: "600m"
+      memory: "1.5Gi"
+  postgresql:
+    enabled: true
+    primary:
+      persistence:
+        size: 10Gi
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "512Mi"
+      limits:
+        cpu: "400m"
+        memory: "1Gi"

@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namePrefix: stg-
+namespace: camunda-staging
+
+resources:
+- ../../base
+- ingress.yaml
+
+helmCharts:
+- name: camunda-platform
+  releaseName: camunda-staging
+  valuesFile: values-staging.yaml
+
+configMapGenerator:
+- name: environment-config
+  behavior: merge
+  literals:
+    - ENVIRONMENT=staging
+    - LOG_LEVEL=INFO
+    - API_BASE_URL=https://staging-camunda.seudominio.com
+
+patches:
+- target:
+    kind: Deployment
+    name: camunda-staging-zeebe-gateway
+  patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 2
+- path: network-policy.yaml
+
+transformers:
+- |-
+  apiVersion: builtin
+  kind: NamespaceTransformer
+  metadata:
+    name: staging-namespace
+    namespace: camunda-staging

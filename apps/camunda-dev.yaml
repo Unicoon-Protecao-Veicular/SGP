@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: camunda-dev
+  namespace: argocd
+spec:
+  project: dev
+  source:
+    repoURL: https://github.com/Unicoon-Protecao-Veicular/SGP.git
+    targetRevision: main
+    path: camunda/overlays/dev
+    kustomize:
+      enableHelm: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: camunda-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
