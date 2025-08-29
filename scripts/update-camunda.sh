@@ -25,13 +25,13 @@ fi
 # Fazer pull das atualizações
 echo "[ \$(date) ] Atualizando repositório..." >> "$LOG_FILE"
 git pull origin main
+chmod +x scripts/config-camunda.sh
 
 EOF
 
 # Aplicar configurações
 if [ -f "scripts/config-camunda.sh" ]; then
     echo "[ \$(date) ] Executando script de configuração..." >> "$LOG_FILE"
-    chmod +x scripts/config-camunda.sh
     ./scripts/config-camunda.sh
 fi
 
