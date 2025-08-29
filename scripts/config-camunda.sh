@@ -24,5 +24,6 @@ if [ ! -f "$BASE_DIR/.configured" ]; then
     # Marcar como configurado
     touch "$BASE_DIR/.configured"
     echo "Configuração inicial concluída!"
-    EOF
+    
+EOF
 fi
