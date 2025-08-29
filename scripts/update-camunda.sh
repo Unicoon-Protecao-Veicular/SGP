@@ -26,6 +26,8 @@ fi
 echo "[ \$(date) ] Atualizando repositório..." >> "$LOG_FILE"
 git pull origin main
 
+EOF
+
 # Aplicar configurações
 if [ -f "scripts/config-camunda.sh" ]; then
     echo "[ \$(date) ] Executando script de configuração..." >> "$LOG_FILE"
@@ -33,13 +35,8 @@ if [ -f "scripts/config-camunda.sh" ]; then
     ./scripts/config-camunda.sh
 fi
 
-# Ajustar permissões para outros usuários (se necessário)
-find . -type f -exec chmod 644 {} \;
-find . -type d -exec chmod 755 {} \;
-find . -name "*.sh" -exec chmod 755 {} \;
-
 echo "[ \$(date) ] Atualização concluída com sucesso!" >> "$LOG_FILE"
-EOF
+
 
 # Recarregar systemd se necessário
 sudo systemctl daemon-reload
