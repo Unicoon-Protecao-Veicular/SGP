@@ -18,10 +18,8 @@ if [ ! -f "$BASE_DIR/.configured" ]; then
     
     # Configurar systemd
     sudo cp "$BASE_DIR/systemd/camunda.service" /etc/systemd/system/
-    sudo cp "$BASE_DIR/systemd/camunda-backup.timer" /etc/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable camunda.service
-    sudo systemctl enable camunda-backup.timer
     
     # Marcar como configurado
     touch "$BASE_DIR/.configured"
