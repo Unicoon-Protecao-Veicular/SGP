@@ -16,6 +16,5 @@ Estrutura padronizada para ambientes e código-fonte do Camunda (microserviços,
 
 ## Próximos passos
 
-- Preencher `dev/docker-compose.yml` e `staging/docker-compose.yml` com serviços necessários.
+- Após clonar o repositório, execute `scripts/config-camunda.sh` para configurar o Camunda (ex.: `bash scripts/config-camunda.sh`).
 - Definir variáveis em `dev/.env` e `staging/.env` (não commitar segredos reais).
-- Adicionar manifests em `production/k8s/` e/ou charts em `production/helm/`.
