@@ -20,8 +20,9 @@ if [ ! -f "$BASE_DIR/.configured" ]; then
     sudo cp "$BASE_DIR/systemd/camunda.service" /etc/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable camunda.service
-    
+    sudo -u camunda-deploy -i << EOF
     # Marcar como configurado
     touch "$BASE_DIR/.configured"
     echo "Configuração inicial concluída!"
+    EOF
 fi
