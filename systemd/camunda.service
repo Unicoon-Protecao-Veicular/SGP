@@ -1,15 +1,18 @@
-# /etc/systemd/system/camunda-update.service
+# /etc/systemd/system/camunda.service
 [Unit]
-Description=Camunda Update Service
+Description=Camunda Platform Service
+After=network.target
 
 [Service]
 Type=oneshot
+RemainAfterExit=yes
 User=camunda-deploy
 Group=camunda-deploy
 WorkingDirectory=/srv/camunda
-ExecStart=/srv/camunda/scripts/update-camunda.sh
-Environment=GIT_SSH_COMMAND="ssh -i /home/camunda-deploy/.ssh/camunda-deploy -o IdentitiesOnly=yes"
-ReadWritePaths=/srv/camunda
-ProtectSystem=strict
-NoNewPrivileges=yes
-PrivateTmp=yes
+ExecStart=/srv/camunda/manage-camunda.sh start
+ExecStop=/srv/camunda/manage-camunda.sh stop
+ExecReload=/srv/camunda/manage-camunda.sh restart
+
+[Install]
+WantedBy=multi-user.target
+EOF

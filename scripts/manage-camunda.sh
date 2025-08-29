@@ -34,19 +34,6 @@ case "$1" in
         echo "Containers em execução:"
         podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         ;;
-    backup)
-        echo "Criando backup dos ambientes..."
-        TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-        
-        # Backup do ambiente DEV
-        cd $CAMUNDA_DIR/dev
-        podman-compose exec camunda-dev tar czf /tmp/camunda-dev-backup-$TIMESTAMP.tar.gz /camunda/database
-        podman cp camunda-dev:/tmp/camunda-dev-backup-$TIMESTAMP.tar.gz $CAMUNDA_DIR/dev/backups/
-        
-        # Backup do ambiente STAGING
-        cd $CAMUNDA_DIR/staging
-        podman-compose exec postgres-staging pg_dump -U camunda camunda > $CAMUNDA_DIR/staging/backups/camunda-staging-backup-$TIMESTAMP.sql
-        ;;
     *)
         echo "Uso: $0 {start|stop|restart|status|backup}"
         exit 1
