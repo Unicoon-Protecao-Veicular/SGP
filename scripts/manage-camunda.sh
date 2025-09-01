@@ -110,54 +110,47 @@ print_urls() {
     esac
 }
 
-# Start a specific environment with staggered service startup
+# Start a specific environment with a more robust staggered startup
 start_env() {
     local env="$1"
     local dir
     dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
-    echo "Iniciando ambiente $env com inicialização orquestrada..."
+    echo "Iniciando ambiente $env com inicialização orquestrada (versão robusta)..."
     cd "$dir" || return 1
 
-    # Define o tempo de espera em segundos entre os grupos de serviços.
-    # Se ainda encontrar erros, você pode aumentar este valor para 30 ou 45.
-    local SLEEP_INTERVAL=20
+    local SLEEP_INTERVAL=30 # 30 segundos deve ser um bom equilíbrio aqui
 
-    # -- ETAPA 1: Iniciar bancos de dados e serviços base --
-    echo "--- Etapa 1/4: Iniciando bancos de dados, Elasticsearch, Keycloak e serviços de suporte..."
-    # CORREÇÃO APLICADA AQUI: 'postgres-identity' foi substituído por 'postgres-keycloak'
-    run_compose up -d postgres-keycloak postgres-modeler elasticsearch keycloak mailhog modeler-websockets || return 1
-    echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização dos serviços base..."
+    # -- ETAPA 1: Bancos de dados e Elasticsearch --
+    echo "--- Etapa 1/5: Iniciando bancos de dados e Elasticsearch..."
+    run_compose up -d postgres-keycloak postgres-modeler elasticsearch || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos..."
     sleep $SLEEP_INTERVAL
 
-    # -- ETAPA 2: Iniciar o motor Zeebe e os Conectores --
-    echo "--- Etapa 2/4: Iniciando o motor Zeebe e os Connectors..."
-    run_compose up -d zeebe connectors || return 1
-    echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização do Zeebe..."
+    # -- ETAPA 2: Keycloak e serviços de suporte --
+    echo "--- Etapa 2/5: Iniciando Keycloak e serviços de suporte..."
+    run_compose up -d keycloak mailhog modeler-websockets || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos para o Keycloak inicializar completamente..."
     sleep $SLEEP_INTERVAL
 
-    # -- ETAPA 3: Iniciar os aplicativos principais do Camunda (Identity, Operate, Tasklist) --
-    echo "--- Etapa 3/4: Iniciando Identity, Operate e Tasklist..."
-    run_compose up -d identity operate tasklist || return 1
-    echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização dos aplicativos principais..."
+    # -- ETAPA 3: Identity (Crítico) --
+    echo "--- Etapa 3/5: Iniciando o Identity para configurar o Keycloak..."
+    run_compose up -d identity || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos para o Identity estabilizar..."
     sleep $SLEEP_INTERVAL
 
-    # -- ETAPA 4: Iniciar os componentes do Web Modeler --
-    echo "--- Etapa 4/4: Iniciando os serviços do Web Modeler..."
+    # -- ETAPA 4: Core do Camunda (Zeebe, Operate, Tasklist, Connectors) --
+    echo "--- Etapa 4/5: Iniciando o core do Camunda..."
+    run_compose up -d zeebe operate tasklist connectors || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos..."
+    sleep $SLEEP_INTERVAL
+
+    # -- ETAPA 5: Web Modeler --
+    echo "--- Etapa 5/5: Iniciando os serviços do Web Modeler..."
     run_compose up -d modeler-restapi modeler-webapp || return 1
 
     echo ""
     echo "Ambiente $env iniciado com sucesso!"
     print_urls "$env"
-}
-
-# Stop a specific environment
-stop_env() {
-    local env="$1"
-    local dir
-    dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
-    echo "Parando ambiente $env..."
-    cd "$dir"
-    run_compose down || return 1
 }
 
 case "$1" in
