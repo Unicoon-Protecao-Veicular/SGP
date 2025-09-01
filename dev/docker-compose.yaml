@@ -40,8 +40,7 @@ services:
       - management.endpoints.web.exposure.include=health,info,metrics,prometheus,configprops
       - MANAGEMENT_ENDPOINT_CONFIGPROPS_SHOW_VALUES=ALWAYS
     env_file:
-      - path: .env
-        required: true
+      - .env
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "timeout 10s bash -c ':> /dev/tcp/127.0.0.1/9600' || exit 1"]
@@ -89,8 +88,7 @@ services:
       - management.endpoint.health.probes.enabled=true
       - ZEEBE_CLIENT_CONFIG_PATH=/tmp/zeebe_auth_cache
     env_file:
-      - path: .env
-        required: true
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "wget -O - -q 'http://localhost:9600/actuator/health/readiness'"]
       interval: 30s
@@ -139,8 +137,7 @@ services:
       - MANAGEMENT_ENDPOINT_CONFIGPROPS_SHOW_VALUES=ALWAYS
       - management.endpoint.health.probes.enabled=true
     env_file:
-      - path: .env
-        required: true
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "wget -O - -q 'http://localhost:9600/actuator/health/readiness'"]
       interval: 30s
@@ -186,10 +183,8 @@ services:
       - MANAGEMENT_ENDPOINT_CONFIGPROPS_SHOW_VALUES=ALWAYS
       - management.endpoint.health.probes.enabled=true
     env_file:
-      - path: .env
-        required: true
-      - path: connector-secrets.txt
-        required: true
+      - .env
+      - connector-secrets.txt
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health/readiness"]
       interval: 30s
@@ -255,8 +250,7 @@ services:
       MULTITENANCY_ENABLED: ${MULTI_TENANCY_ENABLED}
       RESOURCE_PERMISSIONS_ENABLED: ${RESOURCE_AUTHORIZATIONS_ENABLED}
     env_file:
-      - path: .env
-        required: true
+      - .env
     healthcheck:
       test: ["CMD", "wget", "-q", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
       interval: 5s
@@ -282,8 +276,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     restart: on-failure
     env_file:
-      - path: .env
-        required: true
+      - .env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
       interval: 10s
@@ -310,8 +303,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     restart: on-failure
     env_file:
-      - path: .env
-        required: true
+      - .env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:18080/auth"]
       interval: 30s
@@ -365,8 +357,7 @@ services:
       POSTGRES_USER: web-modeler-db-user
       POSTGRES_PASSWORD: ${WEB_MODELER_DB_PASSWORD}
     env_file:
-      - path: .env
-        required: true
+      - .env
     networks:
       - web-modeler
     volumes:
@@ -431,10 +422,8 @@ services:
       CAMUNDA_MODELER_CLUSTERS_0_URL_TASKLIST: http://tasklist:8080
     # extra cluster configuration depending on the authentication mode
     env_file:
-      - path: .env
-        required: true
-      - path: ./.web-modeler/cluster-config-authentication-mode-${ZEEBE_AUTHENTICATION_MODE}.env
-        required: true
+      - .env
+      - ./.web-modeler/cluster-config-authentication-mode-${ZEEBE_AUTHENTICATION_MODE}.env
     networks:
       - web-modeler
       - camunda-platform
@@ -472,8 +461,7 @@ services:
       IDENTITY_BASE_URL: http://identity:8084/
       PLAY_ENABLED: "true"
     env_file:
-      - path: .env
-        required: true
+      - .env
     networks:
       - web-modeler
       - camunda-platform
@@ -495,8 +483,7 @@ services:
       PUSHER_APP_KEY: web-modeler-app-key
       PUSHER_APP_SECRET: ${WEB_MODELER_PUSHER_SECRET}
     env_file:
-      - path: .env
-        required: true
+      - .env
     networks:
       - web-modeler
 
