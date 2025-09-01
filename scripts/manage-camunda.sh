@@ -124,7 +124,8 @@ start_env() {
 
     # -- ETAPA 1: Iniciar bancos de dados e serviços base --
     echo "--- Etapa 1/4: Iniciando bancos de dados, Elasticsearch, Keycloak e serviços de suporte..."
-    run_compose up -d postgres-identity postgres-modeler elasticsearch keycloak mailhog modeler-websockets || return 1
+    # CORREÇÃO APLICADA AQUI: 'postgres-identity' foi substituído por 'postgres-keycloak'
+    run_compose up -d postgres-keycloak postgres-modeler elasticsearch keycloak mailhog modeler-websockets || return 1
     echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização dos serviços base..."
     sleep $SLEEP_INTERVAL
 
@@ -135,7 +136,6 @@ start_env() {
     sleep $SLEEP_INTERVAL
 
     # -- ETAPA 3: Iniciar os aplicativos principais do Camunda (Identity, Operate, Tasklist) --
-    # Esta é a etapa crítica onde o 'identity' costumava falhar.
     echo "--- Etapa 3/4: Iniciando Identity, Operate e Tasklist..."
     run_compose up -d identity operate tasklist || return 1
     echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização dos aplicativos principais..."
