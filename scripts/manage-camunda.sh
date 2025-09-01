@@ -110,15 +110,43 @@ print_urls() {
     esac
 }
 
-# Start a specific environment
+# Start a specific environment with staggered service startup
 start_env() {
     local env="$1"
     local dir
     dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
-    echo "Iniciando ambiente $env..."
-    cd "$dir"
-    run_compose up -d || return 1
-    echo "Ambiente $env iniciado:"
+    echo "Iniciando ambiente $env com inicialização orquestrada..."
+    cd "$dir" || return 1
+
+    # Define o tempo de espera em segundos entre os grupos de serviços.
+    # Se ainda encontrar erros, você pode aumentar este valor para 30 ou 45.
+    local SLEEP_INTERVAL=20
+
+    # -- ETAPA 1: Iniciar bancos de dados e serviços base --
+    echo "--- Etapa 1/4: Iniciando bancos de dados, Elasticsearch, Keycloak e serviços de suporte..."
+    run_compose up -d postgres-identity postgres-modeler elasticsearch keycloak mailhog modeler-websockets || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização dos serviços base..."
+    sleep $SLEEP_INTERVAL
+
+    # -- ETAPA 2: Iniciar o motor Zeebe e os Conectores --
+    echo "--- Etapa 2/4: Iniciando o motor Zeebe e os Connectors..."
+    run_compose up -d zeebe connectors || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização do Zeebe..."
+    sleep $SLEEP_INTERVAL
+
+    # -- ETAPA 3: Iniciar os aplicativos principais do Camunda (Identity, Operate, Tasklist) --
+    # Esta é a etapa crítica onde o 'identity' costumava falhar.
+    echo "--- Etapa 3/4: Iniciando Identity, Operate e Tasklist..."
+    run_compose up -d identity operate tasklist || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos para a estabilização dos aplicativos principais..."
+    sleep $SLEEP_INTERVAL
+
+    # -- ETAPA 4: Iniciar os componentes do Web Modeler --
+    echo "--- Etapa 4/4: Iniciando os serviços do Web Modeler..."
+    run_compose up -d modeler-restapi modeler-webapp || return 1
+
+    echo ""
+    echo "Ambiente $env iniciado com sucesso!"
     print_urls "$env"
 }
 
