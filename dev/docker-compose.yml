@@ -1,49 +1,139 @@
 version: '3.8'
 services:
-  camunda-dev:
-    image: camunda/camunda-bpm-platform:${CAMUNDA_VERSION:-latest}
-    container_name: camunda-dev
-    hostname: camunda-dev
-    ports:
-      - "${DEV_PORT:-8080}:8080"
-    env_file:
-      - .env
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-7.17.9}
+    container_name: es-dev
     environment:
-      - DB_DRIVER=${DB_DRIVER}
-      - DB_URL=${DB_URL}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - CAMUNDA_ADMIN_USER=${CAMUNDA_ADMIN_USER}
-      - CAMUNDA_ADMIN_PASSWORD=${CAMUNDA_ADMIN_PASSWORD}
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - cluster.name=camunda-dev
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "${ES_HTTP_PORT:-9200}:9200"
     volumes:
-      - ./data:/camunda/database
-      - ./logs:/camunda/logs
-    restart: unless-stopped
-    depends_on:
-      - postgres-dev
+      - es-dev-data:/usr/share/elasticsearch/data
     networks:
       - camunda-dev-net
+    restart: unless-stopped
 
-  postgres-dev:
-    image: postgres:13
-    container_name: postgres-dev
-    hostname: postgres-dev
+  zeebe:
+    image: camunda/zeebe:${ZEEBE_VERSION:-latest}
+    container_name: zeebe-dev
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USERNAME}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - ZEEBE_LOG_LEVEL=info
+      - ZEEBE_BROKER_CLUSTER_PARTITIONS_COUNT=1
+      - ZEEBE_BROKER_CLUSTER_REPLICATION_FACTOR=1
+      - ZEEBE_BROKER_CLUSTER_NODE_ID=0
+      - ZEEBE_BROKER_CLUSTER_CLUSTER_SIZE=1
+      - ZEEBE_BROKER_GATEWAY_ENABLE=true
+      - ZEEBE_BROKER_GATEWAY_NETWORK_PORT=26500
+      - ZEEBE_BROKER_NETWORK_COMMANDAPI_PORT=26501
+    ports:
+      - "26500:26500" # gRPC Gateway
     volumes:
-      - pg-dev-data:/var/lib/postgresql/data
+      - zeebe-dev-data:/usr/local/zeebe/data
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+
+  operate:
+    image: camunda/operate:${OPERATE_VERSION:-latest}
+    container_name: operate-dev
+    depends_on:
+      - elasticsearch
+      - zeebe
+    environment:
+      - CAMUNDA_OPERATE_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SPRING_PROFILES_ACTIVE=dev
+    ports:
+      - "8081:8080" # expose Operate on standard 8081
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+
+  tasklist:
+    image: camunda/tasklist:${TASKLIST_VERSION:-latest}
+    container_name: tasklist-dev
+    depends_on:
+      - elasticsearch
+      - zeebe
+    environment:
+      - CAMUNDA_TASKLIST_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SPRING_PROFILES_ACTIVE=dev
+    ports:
+      - "8082:8080" # expose Tasklist on standard 8082
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+
+  connectors:
+    image: camunda/connectors-bundle:${CONNECTORS_VERSION:-latest}
+    container_name: connectors-dev
+    environment:
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
+      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
+      - CAMUNDA_CONNECTOR_LOG_LEVEL=info
+    depends_on:
+      - zeebe
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+
+  postgres-identity:
+    image: postgres:${IDENTITY_DB_VERSION:-15}
+    container_name: postgres-identity-dev
+    environment:
+      - POSTGRES_DB=${IDENTITY_DB_NAME:-identity}
+      - POSTGRES_USER=${IDENTITY_DB_USER:-identity}
+      - POSTGRES_PASSWORD=${IDENTITY_DB_PASSWORD:-identity}
+    volumes:
+      - pg-identity-dev-data:/var/lib/postgresql/data
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-24.0.4}
+    container_name: keycloak-dev
+    command: start-dev --http-port=18080
+    environment:
+      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    ports:
+      - "18080:18080"
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+
+  identity:
+    image: camunda/identity:${IDENTITY_VERSION:-latest}
+    container_name: identity-dev
+    depends_on:
+      - keycloak
+      - postgres-identity
+    environment:
+      - IDENTITY_DATABASE_HOST=postgres-identity
+      - IDENTITY_DATABASE_PORT=5432
+      - IDENTITY_DATABASE_NAME=${IDENTITY_DB_NAME:-identity}
+      - IDENTITY_DATABASE_USERNAME=${IDENTITY_DB_USER:-identity}
+      - IDENTITY_DATABASE_PASSWORD=${IDENTITY_DB_PASSWORD:-identity}
+      - KEYCLOAK_URL=http://keycloak:18080
+      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-camunda-platform}
+      - KEYCLOAK_ADMIN_CLIENT_SECRET=${KEYCLOAK_ADMIN_CLIENT_SECRET:-changeme}
+      - SPRING_PROFILES_ACTIVE=dev
+    ports:
+      - "8084:8080" # expose Identity on standard 8084
     networks:
       - camunda-dev-net
     restart: unless-stopped
 
 volumes:
-  pg-dev-data:
+  es-dev-data:
+  zeebe-dev-data:
+  pg-identity-dev-data:
 
 networks:
   camunda-dev-net:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/24
