@@ -10,41 +10,43 @@ COMPOSE_CMD=""
 
 # Helper: run compose with sudo fallback on permission denied
 run_compose() {
-    local action="$1" # up -d | down
-    shift
-    if $COMPOSE_CMD "$@" 2>compose_err.log; then
-        rm -f compose_err.log
+    local err
+    err=$(mktemp /tmp/compose_err.XXXXXX)
+    if $COMPOSE_CMD "$@" 2>"$err"; then
+        rm -f "$err"
         return 0
     fi
-    if grep -qi "permission denied" compose_err.log; then
+    if grep -qi "permission denied" "$err"; then
         echo "Permissão negada ao acessar o socket do container runtime. Tentando com sudo..."
         if sudo $COMPOSE_CMD "$@"; then
-            rm -f compose_err.log
+            rm -f "$err"
             return 0
         fi
     fi
     echo "Falha ao executar '$COMPOSE_CMD $*'" >&2
-    cat compose_err.log >&2
-    rm -f compose_err.log
+    cat "$err" >&2
+    rm -f "$err"
     return 1
 }
 
 # Helper: run engine (e.g., docker/podman) with sudo fallback for read-only commands
 run_engine() {
-    if $ENGINE_CMD "$@" 2>engine_err.log; then
-        rm -f engine_err.log
+    local err
+    err=$(mktemp /tmp/engine_err.XXXXXX)
+    if $ENGINE_CMD "$@" 2>"$err"; then
+        rm -f "$err"
         return 0
     fi
-    if grep -qi "permission denied" engine_err.log; then
+    if grep -qi "permission denied" "$err"; then
         echo "Permissão negada ao acessar o socket do container runtime. Tentando com sudo..."
         if sudo $ENGINE_CMD "$@"; then
-            rm -f engine_err.log
+            rm -f "$err"
             return 0
         fi
     fi
     echo "Falha ao executar '$ENGINE_CMD $*'" >&2
-    cat engine_err.log >&2
-    rm -f engine_err.log
+    cat "$err" >&2
+    rm -f "$err"
     return 1
 }
 
