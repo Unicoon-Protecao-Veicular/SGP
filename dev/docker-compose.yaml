@@ -292,7 +292,8 @@ services:
     image: bitnamilegacy/keycloak:${KEYCLOAK_SERVER_VERSION}
     volumes:
       - keycloak-theme:/opt/bitnami/keycloak/themes/identity
-      - ./certs/keycloak.pem:/opt/bitnami/keycloak/certs/keycloak.pem
+      - ./certs/keycloak.crt:/opt/bitnami/keycloak/certs/keycloak.crt
+      - ./certs/keycloak.key:/opt/bitnami/keycloak/certs/keycloak.key
     ports:
       - "18080:18080"
       - "8443:8443"
