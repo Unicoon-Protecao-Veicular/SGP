@@ -309,10 +309,10 @@ services:
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
       KEYCLOAK_HTTPS_PORT: 8443
-      KEYCLOAK_HTTPS_CERTIFICATE_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
-      KEYCLOAK_HTTPS_CERTIFICATE_KEY_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
-      KC_HTTPS_CERTIFICATE_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
-      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
+      KEYCLOAK_HTTPS_CERTIFICATE_FILE: /opt/bitnami/keycloak/certs/keycloak.crt
+      KEYCLOAK_HTTPS_CERTIFICATE_KEY_FILE: /opt/bitnami/keycloak/certs/keycloak.key
+      KC_HTTPS_CERTIFICATE_FILE: /opt/bitnami/keycloak/certs/keycloak.crt
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/bitnami/keycloak/certs/keycloak.key
     restart: on-failure
     env_file:
       - .env
