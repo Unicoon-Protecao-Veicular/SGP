@@ -42,12 +42,6 @@ else
         echo "-> Criado '$ENV_DIR/.web-modeler'"
         files_created=true
     fi
-    # Copia .optimize se necessário
-    if [ -f "$ENV_DIR/.optimize.example" ] && [ ! -f "$ENV_DIR/.optimize" ]; then
-        cp "$ENV_DIR/.optimize.example" "$ENV_DIR/.optimize"
-        echo "-> Criado '$ENV_DIR/.optimize'"
-        files_created=true
-    fi
 
     if [ "$files_created" = true ]; then
         echo "AVISO: Edite os arquivos recém-criados em '$ENV_DIR' com as credenciais e configurações corretas."

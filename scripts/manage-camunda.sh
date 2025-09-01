@@ -122,31 +122,31 @@ start_env() {
 
     # -- ETAPA 1: Bancos de dados e Elasticsearch --
     echo "--- Etapa 1/5: Iniciando bancos de dados e Elasticsearch..."
-    run_compose up -d postgres-keycloak postgres-modeler elasticsearch || return 1
+    run_compose up -d postgres web-modeler-db elasticsearch || return 1
     echo "Aguardando $SLEEP_INTERVAL segundos..."
     sleep $SLEEP_INTERVAL
 
     # -- ETAPA 2: Keycloak e serviços de suporte --
     echo "--- Etapa 2/5: Iniciando Keycloak e serviços de suporte..."
-    run_compose up -d keycloak mailhog modeler-websockets || return 1
+    run_compose up -d keycloak mailpit web-modeler-websockets || return 1
     echo "Aguardando $SLEEP_INTERVAL segundos para o Keycloak inicializar completamente..."
     sleep $SLEEP_INTERVAL
 
     # -- ETAPA 3: Identity (Crítico) --
     echo "--- Etapa 3/5: Iniciando o Identity para configurar o Keycloak..."
     run_compose up -d identity || return 1
-    echo "Aguardando $SLEEP_INTERVAL segundos para o Identity estabilizar..."
+    echo "Aguardando $SLEEP_INTERVAL segundos para o Identity (e a configuração do Keycloak) estabilizar..."
     sleep $SLEEP_INTERVAL
 
     # -- ETAPA 4: Core do Camunda (Zeebe, Operate, Tasklist, Connectors) --
     echo "--- Etapa 4/5: Iniciando o core do Camunda..."
     run_compose up -d zeebe operate tasklist connectors || return 1
-    echo "Aguardando $SLEEP_INTERVAL segundos..."
+    echo "Aguardando $SLEEP_INTERVAL segundos para os componentes principais se conectarem..."
     sleep $SLEEP_INTERVAL
 
     # -- ETAPA 5: Web Modeler --
     echo "--- Etapa 5/5: Iniciando os serviços do Web Modeler..."
-    run_compose up -d modeler-restapi modeler-webapp || return 1
+    run_compose up -d web-modeler-restapi web-modeler-webapp || return 1
 
     echo ""
     echo "Ambiente $env iniciado com sucesso!"
