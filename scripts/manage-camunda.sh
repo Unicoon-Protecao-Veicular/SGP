@@ -153,6 +153,30 @@ start_env() {
     print_urls "$env"
 }
 
+# Stop a specific environment
+stop_env() {
+    local env="$1"
+    local dir
+    dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
+    echo "Parando ambiente $env..."
+    cd "$dir" || return 1
+    run_compose down || return 1
+    echo "Ambiente $env parado."
+}
+
+# Clean a specific environment (stops and removes containers, volumes, and networks)
+clean_env() {
+    local env="$1"
+    local dir
+    dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
+    echo "Limpando completamente o ambiente $env (contêineres, volumes e redes)..."
+    cd "$dir" || return 1
+    # --remove-orphans is crucial for cleaning up old service names
+    # -v removes named volumes
+    run_compose down --remove-orphans -v || return 1
+    echo "Limpeza do ambiente $env concluída."
+}
+
 case "$1" in
     start)
         [ -z "$2" ] && { echo "Uso: $0 start {dev|staging}"; exit 2; }
@@ -168,12 +192,17 @@ case "$1" in
         sleep 2
         start_env "$2" || exit 1
         ;;
+    clean)
+        [ -z "$2" ] && { echo "Uso: $0 clean {dev|staging}"; exit 2; }
+        clean_env "$2" || exit 1
+        ;;
     status)
         echo "Containers em execução:"
         run_engine ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         ;;
     *)
-        echo "Uso: $0 {start|stop|restart} {dev|staging} | status"
+        echo "Uso: $0 {start|stop|restart|clean} {dev|staging}"
+        echo "       $0 status"
         exit 1
         ;;
 esac
