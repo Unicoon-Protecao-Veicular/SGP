@@ -292,6 +292,7 @@ services:
     image: bitnamilegacy/keycloak:${KEYCLOAK_SERVER_VERSION}
     volumes:
       - keycloak-theme:/opt/bitnami/keycloak/themes/identity
+      - ./certs/keycloak.pem:/opt/bitnami/keycloak/certs/keycloak.pem
     ports:
       - "18080:18080"
       - "8443:8443"
@@ -306,6 +307,11 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
+      KEYCLOAK_HTTPS_PORT: 8443
+      KEYCLOAK_HTTPS_CERTIFICATE_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
+      KEYCLOAK_HTTPS_CERTIFICATE_KEY_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
+      KC_HTTPS_CERTIFICATE_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
+      KC_HTTPS_CERTIFICATE_KEY_FILE: /opt/bitnami/keycloak/certs/keycloak.pem
     restart: on-failure
     env_file:
       - .env
