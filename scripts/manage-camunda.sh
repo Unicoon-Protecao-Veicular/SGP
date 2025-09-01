@@ -2,14 +2,37 @@
 
 CAMUNDA_DIR="/srv/camunda"
 
-# Detect Podman Compose command: prefer 'podman compose' then fallback to 'podman-compose'
-if podman compose version >/dev/null 2>&1; then
-    COMPOSE_CMD="podman compose"
-elif command -v podman-compose >/dev/null 2>&1; then
-    COMPOSE_CMD="podman-compose"
-else
-    echo "Erro: Nem 'podman compose' nem 'podman-compose' foram encontrados no sistema."
-    echo "Instale o Podman com suporte a 'compose' (recomendado) ou o pacote 'podman-compose'."
+# Detect Container Engine and Compose command
+# Order of preference:
+# 1) docker compose   2) docker-compose   3) podman compose   4) podman-compose
+ENGINE_CMD=""
+COMPOSE_CMD=""
+
+if command -v docker >/dev/null 2>&1; then
+    if docker compose version >/dev/null 2>&1; then
+        ENGINE_CMD="docker"
+        COMPOSE_CMD="docker compose"
+    elif command -v docker-compose >/dev/null 2>&1; then
+        ENGINE_CMD="docker"
+        COMPOSE_CMD="docker-compose"
+    fi
+fi
+
+if [ -z "$COMPOSE_CMD" ] && command -v podman >/dev/null 2>&1; then
+    if podman compose version >/dev/null 2>&1; then
+        ENGINE_CMD="podman"
+        COMPOSE_CMD="podman compose"
+    elif command -v podman-compose >/dev/null 2>&1; then
+        ENGINE_CMD="podman"
+        COMPOSE_CMD="podman-compose"
+    fi
+fi
+
+if [ -z "$COMPOSE_CMD" ] || [ -z "$ENGINE_CMD" ]; then
+    echo "Erro: Nenhum engine/compose suportado encontrado."
+    echo "Tente instalar um dos seguintes:"
+    echo "- Docker (com 'docker compose' ou 'docker-compose')"
+    echo "- Podman (com 'podman compose' ou 'podman-compose')"
     exit 127
 fi
 
@@ -43,7 +66,7 @@ case "$1" in
         ;;
     status)
         echo "Containers em execução:"
-        podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+        $ENGINE_CMD ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         ;;
     *)
         echo "Uso: $0 {start|stop|restart|status|backup}"
