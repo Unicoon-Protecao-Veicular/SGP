@@ -106,13 +106,20 @@ services:
     networks:
       - camunda-dev-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:18080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   identity:
     image: camunda/identity:${IDENTITY_VERSION:-latest}
     container_name: identity-dev
     depends_on:
-      - keycloak
-      - postgres-identity
+      keycloak:
+        condition: service_healthy
+      postgres-identity:
+        condition: service_healthy
     environment:
       - IDENTITY_DATABASE_HOST=postgres-identity
       - IDENTITY_DATABASE_PORT=5432
@@ -142,6 +149,11 @@ services:
     networks:
       - camunda-dev-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB:-modeler} -U ${POSTGRES_USER:-modeler}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   mailhog:
     image: mailhog/mailhog:latest
