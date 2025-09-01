@@ -46,9 +46,16 @@ case "$1" in
         cd "$CAMUNDA_DIR/staging"
         $COMPOSE_CMD up -d
         
-        echo "Ambientes iniciados:"
-        echo "DEV: http://$(hostname -I | awk '{print $1}'):8080/camunda"
-        echo "STAGING: http://$(hostname -I | awk '{print $1}'):8081/camunda"
+        echo "Ambientes iniciados (Camunda 8):"
+        HOST_IP=$(hostname -I | awk '{print $1}')
+        echo "DEV - Operate:   http://$HOST_IP:8081"
+        echo "DEV - Tasklist:  http://$HOST_IP:8082"
+        echo "DEV - Identity:  http://$HOST_IP:8084"
+        echo "DEV - Keycloak:  http://$HOST_IP:18080"
+        echo "STAGING - Operate:   http://$HOST_IP:8181"
+        echo "STAGING - Tasklist:  http://$HOST_IP:8182"
+        echo "STAGING - Identity:  http://$HOST_IP:8184"
+        echo "STAGING - Keycloak:  http://$HOST_IP:28080"
         ;;
     stop)
         echo "Parando ambiente DEV..."
