@@ -78,47 +78,81 @@ if [ -z "$COMPOSE_CMD" ] || [ -z "$ENGINE_CMD" ]; then
     exit 127
 fi
 
+# Resolve environment directory from name
+resolve_env_dir() {
+    case "$1" in
+        dev) echo "$CAMUNDA_DIR/dev" ;;
+        staging) echo "$CAMUNDA_DIR/staging" ;;
+        *) return 1 ;;
+    esac
+}
+
+# Print service URLs by environment
+print_urls() {
+    local env="$1"
+    local HOST_IP
+    HOST_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+    [ -z "$HOST_IP" ] && HOST_IP="localhost"
+
+    case "$env" in
+        dev)
+            echo "DEV - Operate:   http://$HOST_IP:8081"
+            echo "DEV - Tasklist:  http://$HOST_IP:8082"
+            echo "DEV - Identity:  http://$HOST_IP:8084"
+            echo "DEV - Keycloak:  http://$HOST_IP:18080"
+            ;;
+        staging)
+            echo "STAGING - Operate:   http://$HOST_IP:8181"
+            echo "STAGING - Tasklist:  http://$HOST_IP:8182"
+            echo "STAGING - Identity:  http://$HOST_IP:8184"
+            echo "STAGING - Keycloak:  http://$HOST_IP:28080"
+            ;;
+    esac
+}
+
+# Start a specific environment
+start_env() {
+    local env="$1"
+    local dir
+    dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
+    echo "Iniciando ambiente $env..."
+    cd "$dir"
+    run_compose up -d || return 1
+    echo "Ambiente $env iniciado:"
+    print_urls "$env"
+}
+
+# Stop a specific environment
+stop_env() {
+    local env="$1"
+    local dir
+    dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
+    echo "Parando ambiente $env..."
+    cd "$dir"
+    run_compose down || return 1
+}
+
 case "$1" in
     start)
-        echo "Iniciando ambiente DEV..."
-        cd "$CAMUNDA_DIR/dev"
-        run_compose up -d || exit 1
-        
-        echo "Iniciando ambiente STAGING..."
-        cd "$CAMUNDA_DIR/staging"
-        run_compose up -d || exit 1
-        
-        echo "Ambientes iniciados (Camunda 8):"
-        HOST_IP=$(hostname -I | awk '{print $1}')
-        echo "DEV - Operate:   http://$HOST_IP:8081"
-        echo "DEV - Tasklist:  http://$HOST_IP:8082"
-        echo "DEV - Identity:  http://$HOST_IP:8084"
-        echo "DEV - Keycloak:  http://$HOST_IP:18080"
-        echo "STAGING - Operate:   http://$HOST_IP:8181"
-        echo "STAGING - Tasklist:  http://$HOST_IP:8182"
-        echo "STAGING - Identity:  http://$HOST_IP:8184"
-        echo "STAGING - Keycloak:  http://$HOST_IP:28080"
+        [ -z "$2" ] && { echo "Uso: $0 start {dev|staging}"; exit 2; }
+        start_env "$2" || exit 1
         ;;
     stop)
-        echo "Parando ambiente DEV..."
-        cd "$CAMUNDA_DIR/dev"
-        run_compose down || exit 1
-        
-        echo "Parando ambiente STAGING..."
-        cd "$CAMUNDA_DIR/staging"
-        run_compose down || exit 1
+        [ -z "$2" ] && { echo "Uso: $0 stop {dev|staging}"; exit 2; }
+        stop_env "$2" || exit 1
         ;;
     restart)
-        $0 stop
-        sleep 5
-        $0 start
+        [ -z "$2" ] && { echo "Uso: $0 restart {dev|staging}"; exit 2; }
+        stop_env "$2" || exit 1
+        sleep 2
+        start_env "$2" || exit 1
         ;;
     status)
         echo "Containers em execução:"
         run_engine ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
         ;;
     *)
-        echo "Uso: $0 {start|stop|restart|status|backup}"
+        echo "Uso: $0 {start|stop|restart} {dev|staging} | status"
         exit 1
         ;;
 esac
