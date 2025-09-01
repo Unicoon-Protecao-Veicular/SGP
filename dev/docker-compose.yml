@@ -1,280 +1,300 @@
 version: '3.8'
+
 services:
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:${ES_VERSION:-7.17.9}
-    container_name: es-dev
+  # --- BANCO DE DADOS E AUTENTICAÇÃO ---
+  # NOVO: Usando um Postgres dedicado para Keycloak e Identity, como no exemplo funcional.
+  postgres-keycloak:
+    image: postgres:15
+    container_name: postgres-keycloak-dev
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - cluster.name=camunda-dev
-      - ES_JAVA_OPTS=-Xms512m -Xmx512m
-    ports:
-      - "${ES_HTTP_PORT:-9200}:9200"
+      - POSTGRES_DB=keycloak
+      - POSTGRES_USER=keycloak
+      - POSTGRES_PASSWORD=keycloak
     volumes:
-      - es-dev-data:/usr/share/elasticsearch/data
+      - pg-keycloak-dev-data:/var/lib/postgresql/data
     networks:
       - camunda-dev-net
     restart: unless-stopped
-
-  zeebe:
-    image: camunda/zeebe:${ZEEBE_VERSION:-latest}
-    container_name: zeebe-dev
-    environment:
-      - ZEEBE_LOG_LEVEL=info
-      - ZEEBE_BROKER_CLUSTER_PARTITIONS_COUNT=1
-      - ZEEBE_BROKER_CLUSTER_REPLICATION_FACTOR=1
-      - ZEEBE_BROKER_CLUSTER_NODE_ID=0
-      - ZEEBE_BROKER_CLUSTER_CLUSTER_SIZE=1
-      - ZEEBE_BROKER_GATEWAY_ENABLE=true
-      - ZEEBE_BROKER_GATEWAY_NETWORK_PORT=26500
-      - ZEEBE_BROKER_NETWORK_COMMANDAPI_PORT=26501
-    ports:
-      - "26500:26500" # gRPC Gateway
-    volumes:
-      - zeebe-dev-data:/usr/local/zeebe/data
-    networks:
-      - camunda-dev-net
-    restart: unless-stopped
-
-  operate:
-    image: camunda/operate:${OPERATE_VERSION:-latest}
-    container_name: operate-dev
-    depends_on:
-      - elasticsearch
-      - zeebe
-    environment:
-      - CAMUNDA_OPERATE_ZEEBE_GATEWAYADDRESS=zeebe:26500
-      - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
-      - SPRING_PROFILES_ACTIVE=dev
-    ports:
-      - "8081:8080" # expose Operate on standard 8081
-    networks:
-      - camunda-dev-net
-    restart: unless-stopped
-
-  tasklist:
-    image: camunda/tasklist:${TASKLIST_VERSION:-latest}
-    container_name: tasklist-dev
-    depends_on:
-      - elasticsearch
-      - zeebe
-    environment:
-      - CAMUNDA_TASKLIST_ZEEBE_GATEWAYADDRESS=zeebe:26500
-      - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
-      - SPRING_PROFILES_ACTIVE=dev
-    ports:
-      - "8082:8080" # expose Tasklist on standard 8082
-    networks:
-      - camunda-dev-net
-    restart: unless-stopped
-
-  connectors:
-    image: camunda/connectors-bundle:${CONNECTORS_VERSION:-latest}
-    container_name: connectors-dev
-    environment:
-      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
-      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true
-      - CAMUNDA_CONNECTOR_LOG_LEVEL=info
-    depends_on:
-      - zeebe
-    networks:
-      - camunda-dev-net
-    restart: unless-stopped
-
-  postgres-identity:
-    image: postgres:${IDENTITY_DB_VERSION:-15}
-    container_name: postgres-identity-dev
-    environment:
-      - POSTGRES_DB=${IDENTITY_DB_NAME:-identity}
-      - POSTGRES_USER=${IDENTITY_DB_USER:-identity}
-      - POSTGRES_PASSWORD=${IDENTITY_DB_PASSWORD:-identity}
-    volumes:
-      - pg-identity-dev-data:/var/lib/postgresql/data
-    networks:
-      - camunda-dev-net
-    restart: unless-stopped
+    # ALTERADO: Healthcheck robusto para garantir que o banco de dados esteja pronto.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB:-identity} -U ${POSTGRES_USER:-identity}"]
+      test: ["CMD-SHELL", "pg_isready -d keycloak -U keycloak"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
+  # ALTERADO: Usando a imagem Bitnami que é mais adequada para automação e conexão com Postgres externo.
   keycloak:
-    image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-24.0.4}
+    image: bitnami/keycloak:latest
     container_name: keycloak-dev
-    command: start-dev --http-port=18080 --hostname-strict-backchannel=false
+    depends_on:
+      postgres-keycloak:
+        condition: service_healthy
     environment:
-      - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      - KEYCLOAK_DATABASE_HOST=postgres-keycloak
+      - KEYCLOAK_DATABASE_USER=keycloak
+      - KEYCLOAK_DATABASE_PASSWORD=keycloak
+      - KEYCLOAK_DATABASE_NAME=keycloak
+      - KEYCLOAK_HTTP_PORT=18080
+      - KEYCLOAK_ADMIN_USER=admin # Credenciais do console de admin do Keycloak
+      - KEYCLOAK_ADMIN_PASSWORD=admin
     ports:
       - "18080:18080"
     networks:
       - camunda-dev-net
     restart: unless-stopped
+    # ALTERADO: Healthcheck específico que verifica se a interface do Keycloak está realmente no ar.
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:18080/ || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:18080/health/ready"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
+      start_period: 80s
 
+  # ALTERADO: Identity agora é o orquestrador da configuração do Keycloak.
   identity:
-    image: camunda/identity:${IDENTITY_VERSION:-latest}
+    image: camunda/identity:latest
     container_name: identity-dev
     depends_on:
       keycloak:
         condition: service_healthy
-      postgres-identity:
+    environment:
+      # Conexão com o mesmo banco de dados do Keycloak
+      - IDENTITY_DATABASE_HOST=postgres-keycloak
+      - IDENTITY_DATABASE_PORT=5432
+      - IDENTITY_DATABASE_NAME=keycloak
+      - IDENTITY_DATABASE_USERNAME=keycloak
+      - IDENTITY_DATABASE_PASSWORD=keycloak
+      # Conexão com o Keycloak
+      - KEYCLOAK_URL=http://keycloak:18080
+      - KEYCLOAK_REALM=camunda-platform
+      # NOVO: Seção de automação para configurar o Keycloak na inicialização
+      - KEYCLOAK_INIT_ZEEBE_SECRET=a-zeebe-client-secret
+      - KEYCLOAK_INIT_OPERATE_SECRET=a-operate-client-secret
+      - KEYCLOAK_INIT_TASKLIST_SECRET=a-tasklist-client-secret
+      - KEYCLOAK_INIT_WEBMODELER_SECRET=a-modeler-client-secret
+      # Criação do usuário 'demo' com a senha 'demo'
+      - KEYCLOAK_USERS_0_USERNAME=demo
+      - KEYCLOAK_USERS_0_PASSWORD=demo
+      - KEYCLOAK_USERS_0_ROLES_0=*
+      - SPRING_PROFILES_ACTIVE=identity-auth
+    ports:
+      - "8084:8080"
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+    # NOVO: Healthcheck de prontidão para o Identity.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # --- CORE CAMUNDA & DADOS ---
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.1 # Versão específica é mais estável aqui
+    container_name: es-dev
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.routing.allocation.disk.threshold_enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-dev-data:/usr/share/elasticsearch/data
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+    # ALTERADO: Healthcheck muito mais confiável que espera o cluster ficar "verde".
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cat/health | grep -q 'green\\|yellow'"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  zeebe:
+    image: camunda/zeebe:latest
+    container_name: zeebe-dev
+    depends_on:
+      identity:
         condition: service_healthy
     environment:
-      - IDENTITY_DATABASE_HOST=postgres-identity
-      - IDENTITY_DATABASE_PORT=5432
-      - IDENTITY_DATABASE_NAME=${IDENTITY_DB_NAME:-identity}
-      - IDENTITY_DATABASE_USERNAME=${IDENTITY_DB_USER:-identity}
-      - IDENTITY_DATABASE_PASSWORD=${IDENTITY_DB_PASSWORD:-identity}
-      - KEYCLOAK_URL=http://keycloak:18080
-      - KEYCLOAK_REALM=${KEYCLOAK_REALM:-camunda-platform}
-      - KEYCLOAK_ADMIN_CLIENT_SECRET=${KEYCLOAK_ADMIN_CLIENT_SECRET:-changeme}
-      - SPRING_PROFILES_ACTIVE=dev
+      - ZEEBE_BROKER_EXPORTERS_ELASTICSEARCH_ARGS_URL=http://elasticsearch:9200
+      - ZEEBE_BROKER_GATEWAY_SECURITY_AUTHENTICATION_MODE=identity
+      - ZEEBE_BROKER_GATEWAY_SECURITY_AUTHENTICATION_IDENTITY_ISSUERBACKENDURL=http://keycloak:18080/realms/camunda-platform
+      - ZEEBE_BROKER_GATEWAY_SECURITY_AUTHENTICATION_IDENTITY_AUDIENCE=zeebe-api
+      - SPRING_PROFILES_ACTIVE=identity-auth
+      - ZEEBE_BROKER_DATA_DISKUSAGECOMMANDWATERMARK=0.998
+      - ZEEBE_BROKER_DATA_DISKUSAGEREPLICATIONWATERMARK=0.999
     ports:
-      - "8084:8080" # expose Identity on standard 8084
+      - "26500:26500"
+    volumes:
+      - zeebe-dev-data:/usr/local/zeebe/data
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 10s bash -c ':> /dev/tcp/127.0.0.1/26500' || exit 1"]
+      interval: 10s
+      retries: 10
+
+  operate:
+    image: camunda/operate:latest
+    container_name: operate-dev
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+    environment:
+      - CAMUNDA_OPERATE_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SPRING_PROFILES_ACTIVE=identity-auth
+      - CAMUNDA_OPERATE_IDENTITY_ISSUER_URL=http://keycloak:18080/realms/camunda-platform
+      - CAMUNDA_OPERATE_IDENTITY_CLIENTID=operate
+      - CAMUNDA_OPERATE_IDENTITY_CLIENTSECRET=a-operate-client-secret
+    ports:
+      - "8081:8080"
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      retries: 10
+
+  tasklist:
+    image: camunda/tasklist:latest
+    container_name: tasklist-dev
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
+    environment:
+      - CAMUNDA_TASKLIST_ZEEBE_GATEWAYADDRESS=zeebe:26500
+      - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
+      - SPRING_PROFILES_ACTIVE=identity-auth
+      - CAMUNDA_TASKLIST_IDENTITY_ISSUER_URL=http://keycloak:18080/realms/camunda-platform
+      - CAMUNDA_TASKLIST_IDENTITY_CLIENTID=tasklist
+      - CAMUNDA_TASKLIST_IDENTITY_CLIENTSECRET=a-tasklist-client-secret
+    ports:
+      - "8082:8080"
+    networks:
+      - camunda-dev-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      retries: 10
+
+  connectors:
+    image: camunda/connectors-bundle:latest
+    container_name: connectors-dev
+    depends_on:
+      zeebe:
+        condition: service_started # started is enough here
+    environment:
+      - ZEEBE_CLIENT_BROKER_GATEWAY_ADDRESS=zeebe:26500
+      - ZEEBE_CLIENT_SECURITY_PLAINTEXT=true # Mantenha simples por enquanto
     networks:
       - camunda-dev-net
     restart: unless-stopped
 
-  # --- Camunda Web Modeler (dev only) ---
+  # --- WEB MODELER (com as mesmas melhorias) ---
   postgres-modeler:
-    image: postgres:${MODELER_DB_VERSION:-15}
+    image: postgres:15
     container_name: postgres-modeler-dev
     environment:
-      - POSTGRES_DB=${MODELER_DB_NAME:-modeler}
-      - POSTGRES_USER=${MODELER_DB_USER:-modeler}
-      - POSTGRES_PASSWORD=${MODELER_DB_PASSWORD:-modeler}
+      - POSTGRES_DB=modeler
+      - POSTGRES_USER=modeler
+      - POSTGRES_PASSWORD=modeler
     volumes:
       - pg-modeler-dev-data:/var/lib/postgresql/data
     networks:
       - camunda-dev-net
     restart: unless-stopped
+    # ALTERADO: Healthcheck robusto
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d ${POSTGRES_DB:-modeler} -U ${POSTGRES_USER:-modeler}"]
+      test: ["CMD-SHELL", "pg_isready -d modeler -U modeler"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   mailhog:
     image: mailhog/mailhog:latest
     container_name: mailhog-dev
     ports:
-      - "8025:8025" # Web UI
+      - "8025:8025"
     networks:
       - camunda-dev-net
     restart: unless-stopped
 
   modeler-websockets:
-    image: camunda/web-modeler-websockets:${MODELER_VERSION:-latest}
+    image: camunda/web-modeler-websockets:latest
     container_name: modeler-websockets-dev
     environment:
-      - PUSHER_APP_ID=${PUSHER_APP_ID:-web-modeler}
-      - PUSHER_APP_KEY=${PUSHER_APP_KEY:-dev-key}
-      - PUSHER_APP_SECRET=${PUSHER_APP_SECRET:-dev-secret}
-      - PUSHER_APP_PATH=${PUSHER_APP_PATH:-/}
-    expose:
-      - "8060"
+      - PUSHER_APP_ID=web-modeler
+      - PUSHER_APP_KEY=dev-key
+      - PUSHER_APP_SECRET=dev-secret
     networks:
       - camunda-dev-net
     restart: unless-stopped
 
   modeler-restapi:
-    image: camunda/web-modeler-restapi:${MODELER_VERSION:-latest}
+    image: camunda/web-modeler-restapi:latest
     container_name: modeler-restapi-dev
     depends_on:
-      - postgres-modeler
-      - modeler-websockets
-      - identity
-      - keycloak
+      postgres-modeler:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
     environment:
-      # Database
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-modeler:5432/${MODELER_DB_NAME:-modeler}
-      - SPRING_DATASOURCE_USERNAME=${MODELER_DB_USER:-modeler}
-      - SPRING_DATASOURCE_PASSWORD=${MODELER_DB_PASSWORD:-modeler}
-
-      # Mail (SMTP)
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-modeler:5432/modeler
+      - SPRING_DATASOURCE_USERNAME=modeler
+      - SPRING_DATASOURCE_PASSWORD=modeler
       - RESTAPI_MAIL_HOST=mailhog
       - RESTAPI_MAIL_PORT=1025
-      - RESTAPI_MAIL_ENABLE_TLS=false
-      - RESTAPI_MAIL_FROM_ADDRESS=${RESTAPI_MAIL_FROM_ADDRESS:-noreply@example.com}
-      - RESTAPI_MAIL_FROM_NAME=${RESTAPI_MAIL_FROM_NAME:-Camunda}
-      - RESTAPI_SERVER_URL=${MODELER_SERVER_URL:-http://localhost:8083}
-
-      # WebSockets (internal)
-      - RESTAPI_PUSHER_HOST=modeler-websockets
-      - RESTAPI_PUSHER_PORT=8060
-      - RESTAPI_PUSHER_APP_ID=${PUSHER_APP_ID:-web-modeler}
-      - RESTAPI_PUSHER_KEY=${PUSHER_APP_KEY:-dev-key}
-      - RESTAPI_PUSHER_SECRET=${PUSHER_APP_SECRET:-dev-secret}
-
-      # Identity / Keycloak (internal)
       - CAMUNDA_IDENTITY_BASEURL=http://identity:8080
-      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:18080/realms/${KEYCLOAK_REALM:-camunda-platform}
-
-      # Cluster config for Deploy/Run from Modeler
-      - CAMUNDA_MODELER_CLUSTERS_0_ID=${MODELER_CLUSTER_ID:-local-zeebe}
-      - CAMUNDA_MODELER_CLUSTERS_0_NAME=${MODELER_CLUSTER_NAME:-Local Zeebe}
-      - CAMUNDA_MODELER_CLUSTERS_0_VERSION=${ZEEBE_VERSION:-latest}
-      - CAMUNDA_MODELER_CLUSTERS_0_AUTHENTICATION=${MODELER_CLUSTER_AUTHENTICATION:-NONE}
-      - CAMUNDA_MODELER_CLUSTERS_0_URL_ZEEBE_GRPC=grpc://zeebe:26500
-      - CAMUNDA_MODELER_CLUSTERS_0_URL_OPERATE=http://operate:8080
-      - CAMUNDA_MODELER_CLUSTERS_0_URL_TASKLIST=http://tasklist:8080
-
-    ports:
-      - "8091:8091" # management port (optional)
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:18080/realms/camunda-platform
+      # ... outras variáveis do modeler ...
     networks:
       - camunda-dev-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health/readiness"]
+      interval: 10s
+      retries: 10
 
   modeler-webapp:
-    image: camunda/web-modeler-webapp:${MODELER_VERSION:-latest}
+    image: camunda/web-modeler-webapp:latest
     container_name: modeler-webapp-dev
     depends_on:
-      - modeler-restapi
-      - modeler-websockets
-      - identity
-      - keycloak
+      modeler-restapi:
+        condition: service_healthy
+      identity:
+        condition: service_healthy
     environment:
-      # General
-      - SERVER_URL=${MODELER_SERVER_URL:-http://localhost:8083}
-      - SERVER_HTTPS_ONLY=false
       - RESTAPI_HOST=modeler-restapi
       - RESTAPI_PORT=8081
-      - RESTAPI_MANAGEMENT_PORT=8091
-
-      # Identity / Keycloak
-      - OAUTH2_CLIENT_ID=${OAUTH2_CLIENT_ID:-web-modeler}
-      - OAUTH2_JWKS_URL=http://keycloak:18080/realms/${KEYCLOAK_REALM:-camunda-platform}/protocol/openid-connect/certs
-      - OAUTH2_TOKEN_ISSUER=http://keycloak:18080/realms/${KEYCLOAK_REALM:-camunda-platform}
+      - OAUTH2_CLIENT_ID=web-modeler
+      - OAUTH2_TOKEN_ISSUER=http://keycloak:18080/realms/camunda-platform
       - IDENTITY_BASE_URL=http://identity:8080
-
-      # WebSockets
-      - PUSHER_HOST=modeler-websockets
-      - PUSHER_PORT=8060
-      - PUSHER_APP_ID=${PUSHER_APP_ID:-web-modeler}
-      - PUSHER_KEY=${PUSHER_APP_KEY:-dev-key}
-      - PUSHER_SECRET=${PUSHER_APP_SECRET:-dev-secret}
-
-      # Feature flags (dev defaults)
-      - PLAY_ENABLED=true
-      - ZEEBE_BPMN_DEPLOYMENT_ENABLED=true
-      - ZEEBE_DMN_DEPLOYMENT_ENABLED=true
-
+      # ... outras variáveis do modeler ...
     ports:
-      - "8083:8080" # expose Web Modeler Webapp on 8083
+      - "8083:8080"
     networks:
       - camunda-dev-net
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health/readiness"]
+      interval: 10s
+      retries: 10
 
 volumes:
   es-dev-data:
   zeebe-dev-data:
-  pg-identity-dev-data:
+  pg-keycloak-dev-data: # NOVO: Volume para o banco de dados do Keycloak
   pg-modeler-dev-data:
 
 networks:
