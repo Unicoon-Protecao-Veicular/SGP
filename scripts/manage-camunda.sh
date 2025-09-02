@@ -96,10 +96,11 @@ print_urls() {
 
     case "$env" in
         dev)
-            echo "DEV - Operate:   http://$HOST_IP:8081"
-            echo "DEV - Tasklist:  http://$HOST_IP:8082"
-            echo "DEV - Identity:  http://$HOST_IP:8084"
-            echo "DEV - Keycloak:  http://$HOST_IP:18080"
+            echo "DEV - Operate:     https://$HOST_IP/operate"
+            echo "DEV - Tasklist:    https://$HOST_IP/tasklist"
+            echo "DEV - Identity:    https://$HOST_IP/identity"
+            echo "DEV - Keycloak:    https://$HOST_IP/keycloak"
+            echo "DEV - Web Modeler: https://$HOST_IP/modeler"
             ;;
         staging)
             echo "STAGING - Operate:   http://$HOST_IP:8181"
@@ -146,7 +147,7 @@ start_env() {
 
     # -- ETAPA 5: Web Modeler --
     echo "--- Etapa 5/5: Iniciando os serviços do Web Modeler..."
-    run_compose up -d web-modeler-restapi web-modeler-webapp || return 1
+    run_compose up -d web-modeler-restapi web-modeler-webapp nginx || return 1
 
     echo ""
     echo "Ambiente $env iniciado com sucesso!"
