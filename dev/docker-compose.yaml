@@ -251,7 +251,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./certs/camunda.crt:/etc/ssl/certs/camunda.crt:ro
       - ./certs/camunda.key:/etc/ssl/private/camunda.key:ro
     depends_on:
