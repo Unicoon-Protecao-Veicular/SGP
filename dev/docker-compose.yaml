@@ -125,7 +125,7 @@ services:
       IDENTITY_DATABASE_NAME: bitnami_keycloak
       IDENTITY_DATABASE_USERNAME: bn_keycloak
       IDENTITY_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
-      KEYCLOAK_URL: http://keycloak:18080/auth
+      KEYCLOAK_URL: https://72.60.53.28/auth
       
     env_file:
       - .env
@@ -164,7 +164,6 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       PROXY_ADDRESS_FORWARDING: "true"
       KEYCLOAK_FRONTEND_URL: "https://72.60.53.28/auth"
-      KC_HTTP_ENABLED: "true"
     env_file:
       - .env
     networks:
