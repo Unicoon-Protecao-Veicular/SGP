@@ -46,18 +46,18 @@ services:
       - ZEEBE_CLIENT_ID=${ZEEBE_CLIENT_ID}
       - ZEEBE_CLIENT_SECRET=${ZEEBE_CLIENT_SECRET}
       - ZEEBE_TOKEN_AUDIENCE=zeebe-api
-      - ZEEBE_AUTHORIZATION_SERVER_URL=http://keycloak:18080/auth/realms/camunda-platform/protocol/openid-connect/token
+      - ZEEBE_AUTHORIZATION_SERVER_URL=https://72.60.53.28/auth/realms/camunda-platform/protocol/openid-connect/token
       - CAMUNDA_OPERATE_ELASTICSEARCH_URL=http://elasticsearch:9200
       - CAMUNDA_OPERATE_ZEEBEELASTICSEARCH_URL=http://elasticsearch:9200
       - SPRING_PROFILES_ACTIVE=identity-auth
       - CAMUNDA_OPERATE_IDENTITY_BASEURL=http://identity:8084
-      - CAMUNDA_OPERATE_IDENTITY_ISSUER_URL=http://${KEYCLOAK_HOST}:18080/auth/realms/camunda-platform
-      - CAMUNDA_OPERATE_IDENTITY_ISSUER_BACKEND_URL=http://keycloak:18080/auth/realms/camunda-platform
+      - CAMUNDA_OPERATE_IDENTITY_ISSUER_URL=https://72.60.53.28/auth/realms/camunda-platform
+      - CAMUNDA_OPERATE_IDENTITY_ISSUER_BACKEND_URL=https://72.60.53.28/auth/realms/camunda-platform
       - CAMUNDA_OPERATE_IDENTITY_CLIENTID=operate
       - CAMUNDA_OPERATE_IDENTITY_CLIENTSECRET=${CAMUNDA_APPS_CLIENT_SECRET}
       - CAMUNDA_OPERATE_IDENTITY_AUDIENCE=operate-api
       - CAMUNDA_OPERATE_MULTITENANCY_ENABLED=${MULTI_TENANCY_ENABLED}
-      - SERVER_FORWARD_HEADERS_STRATEGY=NATIVE # Trust X-Forwarded-* headers from Nginx
+      - SERVER_FORWARD_HEADERS_STRATEGY=NATIVE
       - CAMUNDA_DATABASE_URL=http://elasticsearch:9200
     env_file:
       - .env
@@ -68,7 +68,7 @@ services:
       - identity
       - elasticsearch
 
-  tasklist:
+    tasklist:
     image: camunda/tasklist:${CAMUNDA_TASKLIST_VERSION}
     container_name: tasklist
     ports:
@@ -78,11 +78,11 @@ services:
       - CAMUNDA_TASKLIST_ELASTICSEARCH_URL=http://elasticsearch:9200
       - SPRING_PROFILES_ACTIVE=identity-auth
       - CAMUNDA_TASKLIST_IDENTITY_BASEURL=http://identity:8084
-      - CAMUNDA_TASKLIST_IDENTITY_ISSUER_URL=http://${KEYCLOAK_HOST}:18080/auth/realms/camunda-platform
+      - CAMUNDA_TASKLIST_IDENTITY_ISSUER_URL=https://72.60.53.28/auth/realms/camunda-platform
       - CAMUNDA_TASKLIST_IDENTITY_CLIENTID=tasklist
       - CAMUNDA_TASKLIST_IDENTITY_CLIENTSECRET=${CAMUNDA_APPS_CLIENT_SECRET}
       - CAMUNDA_TASKLIST_IDENTITY_AUDIENCE=tasklist-api
-      - SERVER_FORWARD_HEADERS_STRATEGY=NATIVE # Trust X-Forwarded-* headers from Nginx
+      - SERVER_FORWARD_HEADERS_STRATEGY=NATIVE
     env_file:
       - .env
     networks:
