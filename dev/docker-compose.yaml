@@ -68,7 +68,7 @@ services:
       - identity
       - elasticsearch
 
-    tasklist:
+  tasklist:
     image: camunda/tasklist:${CAMUNDA_TASKLIST_VERSION}
     container_name: tasklist
     ports:
