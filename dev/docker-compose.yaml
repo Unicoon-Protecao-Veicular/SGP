@@ -57,6 +57,7 @@ services:
       - CAMUNDA_OPERATE_IDENTITY_CLIENTSECRET=${CAMUNDA_APPS_CLIENT_SECRET}
       - CAMUNDA_OPERATE_IDENTITY_AUDIENCE=operate-api
       - CAMUNDA_OPERATE_MULTITENANCY_ENABLED=${MULTI_TENANCY_ENABLED}
+      - SERVER_FORWARD_HEADERS_STRATEGY=NATIVE # Trust X-Forwarded-* headers from Nginx
       - CAMUNDA_DATABASE_URL=http://elasticsearch:9200
     env_file:
       - .env
@@ -81,6 +82,7 @@ services:
       - CAMUNDA_TASKLIST_IDENTITY_CLIENTID=tasklist
       - CAMUNDA_TASKLIST_IDENTITY_CLIENTSECRET=${CAMUNDA_APPS_CLIENT_SECRET}
       - CAMUNDA_TASKLIST_IDENTITY_AUDIENCE=tasklist-api
+      - SERVER_FORWARD_HEADERS_STRATEGY=NATIVE # Trust X-Forwarded-* headers from Nginx
     env_file:
       - .env
     networks:
@@ -124,6 +126,7 @@ services:
       IDENTITY_DATABASE_USERNAME: bn_keycloak
       IDENTITY_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
       KEYCLOAK_URL: http://keycloak:18080/auth
+      SERVER_FORWARD_HEADERS_STRATEGY=NATIVE # Trust X-Forwarded-* headers from Nginx
     env_file:
       - .env
     networks:
@@ -211,6 +214,8 @@ services:
   web-modeler-restapi:
     container_name: web-modeler-restapi
     image: camunda/web-modeler-restapi:${CAMUNDA_WEB_MODELER_VERSION}
+    environment:
+      - SERVER_FORWARD_HEADERS_STRATEGY=NATIVE # Trust X-Forwarded-* headers from Nginx
     env_file:
       - .env
     networks:
