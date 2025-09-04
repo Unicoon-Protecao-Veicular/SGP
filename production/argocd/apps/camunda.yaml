@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: camunda-platform
+  namespace: argocd
+spec:
+  project: camunda-platform
+  destination:
+    namespace: camunda
+    server: https://kubernetes.default.svc
+  sources:
+    - repoURL: https://helm.camunda.io
+      chart: camunda-platform
+      targetRevision: 10.3.3
+      helm:
+        releaseName: camunda-platform
+        valueFiles:
+          - $values/production/helm-values/camunda/values.yaml
+    - repoURL: git@github-unicoon:Unicoon-Protecao-Veicular/SGP.git
+      targetRevision: HEAD
+      ref: values
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
