@@ -16,7 +16,7 @@ spec:
         releaseName: camunda-platform
         valueFiles:
           - $values/production/helm-values/camunda/values.yaml
-    - repoURL: git@github-unicoon:Unicoon-Protecao-Veicular/SGP.git
+    - repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
       targetRevision: HEAD
       ref: values
   syncPolicy:

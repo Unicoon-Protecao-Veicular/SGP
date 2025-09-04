@@ -6,7 +6,7 @@ metadata:
 spec:
   project: camunda-platform
   source:
-    repoURL: https://github.com/Unicoon-Protecao-Veicular/SGP.git
+    repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
     path: production/argocd/apps
     targetRevision: HEAD
     directory:
