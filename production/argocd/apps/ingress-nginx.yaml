@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingress-nginx
+  namespace: argocd
+spec:
+  project: camunda-platform
+  destination:
+    namespace: ingress-nginx
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: https://kubernetes.github.io/ingress-nginx
+    chart: ingress-nginx
+    targetRevision: 4.10.1
+    helm:
+      releaseName: ingress-nginx
+      valuesObject:
+        controller:
+          hostNetwork: true
+          dnsPolicy: ClusterFirstWithHostNet
+          kind: DaemonSet
+          service:
+            type: ClusterIP 
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1500m"
+              memory: "1Gi"
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+          config:
+            worker-processes: "auto"
+            worker-connections: "16384"
+            keep-alive: "75"
+            keep-alive-requests: "10000"
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

@@ -1,0 +1,151 @@
+# Minimal, production-oriented defaults for Camunda Platform 8
+# Use with the official Helm chart: camunda/camunda-platform
+
+global:
+  image:
+    pullPolicy: IfNotPresent
+  ingress:
+    # We will provide standalone Ingress objects via nginx-ingress
+    enabled: false
+  # StorageClass padrão para PVCs (ajuste conforme seu cluster)
+  storageClass: longhorn
+
+zeebe:
+  enabled: true
+  broker:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "2000m"
+        memory: "8Gi"
+      limits:
+        cpu: "8000m"
+        memory: "12Gi"
+    env:
+      - name: ZEEBE_BROKER_THREADS_CPU_THREAD_COUNT
+        value: "6"
+      - name: ZEEBE_BROKER_THREADS_IO_THREAD_COUNT
+        value: "2"
+  gateway:
+    enabled: true
+    replicas: 1
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "512Mi"
+      limits:
+        cpu: "1500m"
+        memory: "1Gi"
+    service:
+      type: LoadBalancer  # Expose Zeebe gRPC 26500 for external workers/clients
+
+operate:
+  enabled: true
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+tasklist:
+  enabled: true
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+optimize:
+  enabled: true
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+connectors:
+  enabled: true
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+identity:
+  enabled: true
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+keycloak:
+  enabled: true
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1500m"
+      memory: "2Gi"
+  # Banco de dados PostgreSQL interno (subchart Bitnami) com PVC
+  postgresql:
+    enabled: true
+    primary:
+      persistence:
+        enabled: true
+        size: 20Gi
+        storageClass: longhorn
+
+elasticsearch:
+  enabled: true
+  master:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+    esJavaOpts: "-Xms1g -Xmx1g"
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: longhorn
+  data:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "2000m"
+        memory: "12Gi"
+      limits:
+        cpu: "4000m"
+        memory: "16Gi"
+    esJavaOpts: "-Xms12g -Xmx12g"
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: longhorn
+  coordinating:
+    replicas: 1
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "1000m"
+        memory: "2Gi"
+    esJavaOpts: "-Xms1g -Xmx1g"
+    persistence:
+      enabled: false
