@@ -10,5 +10,8 @@ bash "$(dirname "$0")/bootstrap-helm.sh"
 echo "==> Installing Argo CD"
 bash "$(dirname "$0")/bootstrap-argocd.sh"
 
-echo "All set. Update DNS and Ingress hosts in production/k8s/ingress/*.yaml and apply them."
+echo "==> Configuring Argo CD Repository Access (SSH)"
+bash "$(dirname "$0")/configure-argocd-repo.sh"
 
+echo "All set! A base do ambiente está pronta."
+echo "Próximo passo: execute 'bash production/scripts/bootstrap-apps.sh' para que o Argo CD instale todas as aplicações."
