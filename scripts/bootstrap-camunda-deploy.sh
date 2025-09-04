@@ -16,7 +16,7 @@ set -euo pipefail
 #
 # Requisitos:
 # - Executar como root (ou via sudo)
-# - pacotes: git, openssh-client, acl (opcional para setfacl)
+# - O script instalará automaticamente os pacotes: git, openssh-client, acl
 
 DEPLOY_USER=${DEPLOY_USER:-camunda-deploy}
 DEPLOY_GROUP=${DEPLOY_GROUP:-camunda-deploy}
@@ -73,6 +73,20 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# ---- Função para instalar dependências ----
+install_dependencies() {
+  log "Verificando e instalando dependências (git, openssh-client, acl)..."
+  if ! command -v apt-get >/dev/null; then
+    warn "Gerenciador de pacotes 'apt-get' não encontrado. Pulando instalação de dependências."
+    return
+  fi
+  # Atualiza a lista de pacotes apenas se necessário (evita lentidão)
+  if [ -z "$(find /var/lib/apt/lists -maxdepth 1 -mmin -60)" ]; then
+    apt-get update -y
+  fi
+  apt-get install -y git openssh-client acl
+}
+
 # ---- Root check ----
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
   die "Execute como root (use sudo)."
@@ -80,7 +94,7 @@ fi
 
 # ---- Dependências básicas ----
 command -v git >/dev/null 2>&1 || warn "git não encontrado. Instale para permitir o clone."
-command -v ssh-keygen >/dev/null 2>&1 || die "ssh-keygen não encontrado. Instale o pacote openssh-client."
+install_dependencies
 
 # ---- Garantir grupo e usuário ----
 if ! getent group "$DEPLOY_GROUP" >/dev/null; then
@@ -137,13 +151,20 @@ chmod 644 "$KEY_PATH.pub"
 chown "$DEPLOY_USER:$DEPLOY_GROUP" "$KEY_PATH" "$KEY_PATH.pub"
 
 log "Chave pública ($KEY_PATH.pub):"
-echo "----------------------------------------"
+echo "--------------------------------------------------------------------------------"
+echo "AÇÃO NECESSÁRIA: Adicione a seguinte chave pública como uma 'Deploy Key' no seu repositório GitHub."
+echo "Repositório: $REPO_SSH_URL"
+echo "Navegue para: Settings > Deploy Keys > Add deploy key"
+echo "   - Title: Camunda Deploy"
+echo "   - Key:"
 cat "$KEY_PATH.pub"
-echo "----------------------------------------"
-echo "Adicione a chave pública acima como Deploy Key (read) no GitHub para o repositório alvo."
+echo "   - NÃO marque 'Allow write access'."
+echo "--------------------------------------------------------------------------------"
 
 # ---- (Opcional) Clonar repositório ----
 if [[ -n "$REPO_SSH_URL" ]]; then
+  read -p "Pressione [Enter] para continuar após adicionar a chave ao GitHub..."
+
   PARENT_DIR=$(dirname "$TARGET_DIR")
   install -d -m 775 "$PARENT_DIR"
   chown "$DEPLOY_USER:$DEPLOY_GROUP" "$PARENT_DIR"
@@ -192,4 +213,3 @@ log "Bootstrap concluído."
 if [[ -n "$REPO_SSH_URL" ]]; then
   echo "Se o clone falhou, adicione a Deploy Key ao GitHub e reexecute com os mesmos parâmetros."
 fi
-

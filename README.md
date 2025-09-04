@@ -15,16 +15,17 @@ Estrutura padronizada para ambientes e código-fonte do Camunda (microserviços,
   - `dmn/`: Regras DMN.
 
 ## Bootstrap do Usuário Camunda-Deploy
-- Pré-requisito: cria e configura o usuário `camunda-deploy` na VPS com chave SSH, permissões e (opcional) clona o repositório para `/srv/camunda`.
-- Pré-instalação: `git`, `openssh-client`, e (opcional) `acl` para aplicar ACLs padrão:
-    `sudo apt update && sudo apt install -y git openssh-client && sudo apt install -y acl`
-- Execução (como root):
-  - Gerar usuário/chave e clonar o repo:
-    - `sudo bash scripts/bootstrap-camunda-deploy.sh --repo git@github.com:seu-usuario/camunda-config.git`
-  - Adicionar outros usuários ao grupo de deploy:
-    - `sudo bash scripts/bootstrap-camunda-deploy.sh --add-user usuario1 --add-user usuario2`
-- O script imprime a chave pública do `camunda-deploy` (ex.: `~/.ssh/camunda-deploy.pub`). Adicione-a como Deploy Key (read) no GitHub do repositório alvo. Se o clone falhar por falta de permissão, adicione a chave e reexecute o script.
-- Após o bootstrap, utilize `scripts/config-camunda.sh {dev|staging}` e `scripts/update-camunda.sh` normalmente.
+Este script prepara um servidor Ubuntu para gerenciar os ambientes Camunda. Ele cria um usuário dedicado (`camunda-deploy`), gera chaves SSH, instala as dependências necessárias (`git`, `acl`, etc.) e, opcionalmente, clona o repositório de configuração.
+
+**Execução (como root):**
+```bash
+# Exemplo para criar o usuário e clonar o repositório
+sudo bash scripts/bootstrap-camunda-deploy.sh --repo git@github.com:seu-usuario/camunda-config.git
+
+# Exemplo para adicionar outros usuários ao grupo de deploy
+sudo bash scripts/bootstrap-camunda-deploy.sh --add-user usuario1 --add-user usuario2
+```
+O script imprimirá a chave pública do usuário `camunda-deploy`. Adicione-a como uma **Deploy Key** (com permissão de leitura) no repositório do GitHub para permitir o clone. Se o clone falhar na primeira execução, adicione a chave e execute o script novamente.
 
 ## Próximos passos (ambientes dev/staging)
 
