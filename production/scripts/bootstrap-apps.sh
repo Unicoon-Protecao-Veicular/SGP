@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+BASE_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 
 echo "Applying base namespaces..."
 kubectl apply -f "$BASE_DIR/production/k8s/namespaces.yaml"
