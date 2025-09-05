@@ -12,7 +12,7 @@ spec:
     repoURL: https://charts.longhorn.io
     chart: longhorn
     # Ajuste a versão se necessário
-    targetRevision: 1.6.2
+    targetRevision: 1.5.3
     helm:
       releaseName: longhorn
       valuesObject:
