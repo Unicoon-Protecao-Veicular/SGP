@@ -1,0 +1,49 @@
+# -----------------------------------------------------------------------------
+# ARQUIVO: longhorn-rbac.yaml
+# FASE 1: PRÉ-REQUISITOS DO LONGHORN
+# -----------------------------------------------------------------------------
+#
+# OBJETIVO:
+# Este arquivo define uma aplicação Argo CD para a Fase 1 da instalação do
+# Longhorn. Seu único propósito é criar os recursos essenciais de pré-requisito
+# antes que a aplicação principal do Longhorn tente ser instalada.
+#
+# PROBLEMA RESOLVIDO:
+# Resolve um problema de ordenamento ("chicken-and-egg") onde o Job de
+# pré-instalação do Longhorn (`longhorn-pre-upgrade`) falha porque precisa de um
+# ServiceAccount (`longhorn-service-account`) que ainda não foi criado.
+#
+# COMO FUNCIONA:
+# A anotação `argocd.argocroj.io/sync-wave: "-1"` instrui o Argo CD
+# (através do App-of-Apps) a sincronizar esta aplicação ANTES de todas as
+# outras que estão na "wave" padrão (0). Isso garante que o namespace e o
+# ServiceAccount já existam no cluster quando a Fase 2 (instalação principal)
+# for iniciada.
+#
+# -----------------------------------------------------------------------------
+
+# Path: production/argocd/apps/longhorn-rbac.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: longhorn-rbac
+  namespace: argocd
+  annotations:
+    # This annotation is the key: it forces this app to sync first.
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  project: camunda-platform
+  destination:
+    namespace: longhorn-system
+    server: https://kubernetes.default.svc
+  source:
+    # This points to the folder with the ServiceAccount manifest.
+    repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
+    path: production/k8s/longhorn-prereqs
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
