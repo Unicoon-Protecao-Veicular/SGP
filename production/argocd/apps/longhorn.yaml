@@ -1,3 +1,27 @@
+# -----------------------------------------------------------------------------
+# ARQUIVO: longhorn.yaml
+# FASE 2: INSTALAÇÃO PRINCIPAL DO LONGHORN
+# -----------------------------------------------------------------------------
+#
+# OBJETIVO:
+# Este arquivo define a aplicação Argo CD para a Fase 2 e principal da
+# instalação do Longhorn. Ele é responsável por instalar todos os componentes
+# do Longhorn (Manager, Driver, UI, etc.) utilizando o chart Helm oficial.
+#
+# DEPENDÊNCIA:
+# Esta aplicação pressupõe que a aplicação `longhorn-rbac` (definida em
+# `longhorn-rbac.yaml`) já foi sincronizada com sucesso. A existência prévia
+# dos recursos criados na Fase 1 é essencial para o sucesso desta instalação.
+#
+# COMO FUNCIONA:
+# Por não ter uma anotação `sync-wave`, esta aplicação é executada na "wave"
+# padrão (0), que ocorre DEPOIS da "wave" -1 da aplicação `longhorn-rbac`.
+# Isso garante a ordem correta de execução e resolve o problema de
+# dependência do Job de pré-instalação.
+#
+# -----------------------------------------------------------------------------
+
+# Path: production/argocd/apps/longhorn.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -11,15 +35,12 @@ spec:
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    # Ajuste a versão se necessário
-    targetRevision: 1.5.3
+    targetRevision: 1.6.2
     helm:
       releaseName: longhorn
       valuesObject:
         defaultSettings:
-          # Ajuste se quiser um caminho de dados diferente
           defaultDataPath: /var/lib/longhorn
-          # Réplicas padrão por volume (para single-node pode ser 1)
           defaultReplicaCount: 1
   syncPolicy:
     automated:
@@ -27,5 +48,3 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
-
