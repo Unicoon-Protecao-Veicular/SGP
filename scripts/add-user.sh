@@ -86,6 +86,18 @@ chmod 600 "$AUTHORIZED_KEYS_FILE"
 log "Adicionando usuário '$USERNAME' ao grupo '$DEPLOY_GROUP'..."
 usermod -aG "$DEPLOY_GROUP" "$USERNAME"
 
+# 5. Adicionar usuário ao grupo docker (para uso do Docker sem sudo)
+#    Cria o grupo se não existir e adiciona o usuário.
+if ! getent group docker >/dev/null; then
+  log "O grupo 'docker' não existe. Criando..."
+  groupadd docker
+fi
+
+log "Adicionando usuário '$USERNAME' ao grupo 'docker'..."
+usermod -aG docker "$USERNAME"
+
 log "---"
 log "✅ Configuração concluída com sucesso para o usuário '$USERNAME'!"
 log "Peça para que ele teste o acesso com o comando: ssh $USERNAME@<ip_do_servidor>"
+log "Para usar Docker sem sudo, faça logout/login ou rode: newgrp docker"
+log "Depois valide com: docker ps (deve listar sem pedir sudo)"
