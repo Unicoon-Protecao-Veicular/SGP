@@ -32,6 +32,10 @@ spec:
   destination:
     namespace: longhorn-system
     server: https://kubernetes.default.svc
+  ignoreDifferences:
+  - group: "" # Core API group for ServiceAccount
+    kind: ServiceAccount
+    name: longhorn-service-account
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
