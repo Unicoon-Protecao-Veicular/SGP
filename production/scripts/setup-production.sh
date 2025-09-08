@@ -7,8 +7,11 @@ bash "$(dirname "$0")/bootstrap-k3s.sh"
 echo "==> Installing Helm"
 bash "$(dirname "$0")/bootstrap-helm.sh"
 
-echo "==> Installing Argo CD"
+echo "==> Installing Argo CD Server Components"
 bash "$(dirname "$0")/bootstrap-argocd.sh"
+
+echo "==> Installing Argo CD CLI (Client Tool)"
+bash "$(dirname "$0")/bootstrap-argocd-cli.sh"
 
 echo "==> Configuring Argo CD Repository Access (SSH)"
 bash "$(dirname "$0")/configure-argocd-repo.sh"
