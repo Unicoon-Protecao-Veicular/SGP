@@ -2,6 +2,9 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: ingress-nginx
+  annotations:
+    # Wave 0: Ingress controller após o armazenamento estar pronto.
+    argocd.argoproj.io/sync-wave: "0"
   namespace: argocd
 spec:
   project: camunda-platform
