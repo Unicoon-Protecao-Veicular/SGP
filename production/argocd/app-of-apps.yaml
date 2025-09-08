@@ -7,10 +7,10 @@ spec:
   project: camunda-platform
   source:
     repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
-    path: production/argocd/apps
     targetRevision: HEAD
-    directory:
-      recurse: true
+    # Usar um padrão glob é mais explícito e confiável para o App of Apps.
+    # Isso instrui o Argo CD a tratar cada arquivo .yaml no diretório 'apps' como uma aplicação filha.
+    path: production/argocd/apps/*.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
