@@ -2,6 +2,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  annotations:
+    # Garante que esta aplicação só sincronize após a wave -1 (longhorn-rbac)
+    # ter sido concluída com sucesso.
+    argocd.argoproj.io/sync-wave: "0"
   name: longhorn
   namespace: argocd
 spec:
