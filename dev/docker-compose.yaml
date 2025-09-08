@@ -55,7 +55,7 @@ services:
       retries: 3
       start_period: 60s
     volumes:
-      - zeebe-data:/usr/local/zeebe/data
+      - /data/camunda/zeebe:/usr/local/zeebe/data
     networks:
       - camunda-platform
     depends_on:
@@ -369,7 +369,7 @@ services:
       retries: 3
       start_period: 60s
     volumes:
-      - elastic-data:/usr/share/elasticsearch/data
+      - /data/camunda/elastic:/usr/share/elasticsearch/data
     networks:
       - camunda-platform
 
@@ -539,17 +539,7 @@ services:
 
 volumes:
   zeebe-data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /data/camunda/zeebe
   elastic-data:
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /data/camunda/elastic
   postgres:
   keycloak-theme:
   operate_tmp:
