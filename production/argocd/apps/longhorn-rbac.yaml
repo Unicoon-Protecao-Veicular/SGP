@@ -29,8 +29,8 @@ metadata:
   name: longhorn-rbac
   namespace: argocd
   annotations:
-    # This annotation is the key: it forces this app to sync first.
-    argocd.argoproj.io/sync-wave: "-1"
+    # Wave -5: Força esta aplicação a sincronizar antes da aplicação principal do Longhorn (wave 0).
+    argocd.argoproj.io/sync-wave: "-5"
 spec:
   project: camunda-platform
   destination:

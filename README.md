@@ -20,7 +20,7 @@ Este script prepara um servidor Ubuntu para gerenciar os ambientes Camunda. Ele 
 **Execução (como root):**
 ```bash
 # Exemplo para criar o usuário e clonar o repositório
-sudo bash scripts/bootstrap-camunda-deploy.sh --repo git@github.com:seu-usuario/camunda-config.git
+sudo bash scripts/bootstrap-camunda-deploy.sh --repo git@github.com:Unicoon-Protecao-Veicular/SGP.git
 
 # Exemplo para adicionar outros usuários ao grupo de deploy
 sudo bash scripts/bootstrap-camunda-deploy.sh --add-user usuario1 --add-user usuario2
