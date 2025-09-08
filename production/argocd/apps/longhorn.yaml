@@ -3,9 +3,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   annotations:
-    # Wave 0: Garante que o armazenamento seja instalado APÓS o RBAC (wave -5)
-    # e ANTES de aplicações que o utilizam (ex: Camunda, wave 10).
-    argocd.argoproj.io/sync-wave: "0"
+    # Esta aplicação agora é autossuficiente e não depende de outras waves.
+    argocd.argoproj.io/sync-wave: "0" # Mantido para consistência, mas não essencial.
   name: longhorn
   namespace: argocd
 spec:
@@ -16,14 +15,13 @@ spec:
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: 1.9.1 # Mantendo a versão desejada
+    targetRevision: 1.9.1 # Alinhado com a versão do script de bootstrap para consistência
     helm:
       releaseName: longhorn
       valuesObject:
-        # Instrui o chart a NÃO criar um ServiceAccount, pois ele já é
-        # gerenciado pela aplicação 'longhorn-rbac'.
+        # Agora, a própria aplicação principal do Longhorn gerenciará seu ServiceAccount.
         serviceAccount:
-          create: false
+          create: true
         defaultSettings:
           defaultDataPath: /var/lib/longhorn
           defaultReplicaCount: 1
