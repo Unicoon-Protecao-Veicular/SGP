@@ -16,7 +16,7 @@ spec:
   source:
     repoURL: https://charts.longhorn.io
     chart: longhorn
-    targetRevision: 1.6.2 # Mantendo a versão desejada
+    targetRevision: 1.9.1 # Mantendo a versão desejada
     helm:
       releaseName: longhorn
       valuesObject:
