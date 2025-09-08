@@ -29,5 +29,8 @@ O script imprimirá a chave pública do usuário `camunda-deploy`. Adicione-a co
 
 ## Próximos passos (ambientes dev/staging)
 
-- Após clonar o repositório, execute `scripts/config-camunda.sh` para configurar o Camunda (ex.: `bash scripts/config-camunda.sh`).
+- Execute a configuração apenas para `dev` ou `staging`:
+  - `bash scripts/config-camunda.sh dev`
+  - `bash scripts/config-camunda.sh staging`
+- O script valida o ambiente e recusa qualquer valor diferente de `dev` ou `staging`.
 - Definir variáveis em `dev/.env` e `staging/.env` (não commitar segredos reais).
