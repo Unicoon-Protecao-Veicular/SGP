@@ -54,21 +54,21 @@ run_engine() {
 
 if command -v docker >/dev/null 2>&1; then
     if docker compose version >/dev/null 2>&1; then
-        ENGINE_CMD="docker"
-        COMPOSE_CMD="docker compose"
+        ENGINE_CMD=(docker)
+        COMPOSE_CMD=(docker compose)
     elif command -v docker-compose >/dev/null 2>&1; then
-        ENGINE_CMD="docker"
-        COMPOSE_CMD="docker-compose"
+        ENGINE_CMD=(docker)
+        COMPOSE_CMD=(docker-compose)
     fi
 fi
 
 if [ ${#COMPOSE_CMD[@]} -eq 0 ] && command -v podman >/dev/null 2>&1; then
     if podman compose version >/dev/null 2>&1; then
-        ENGINE_CMD="podman"
-        COMPOSE_CMD="podman compose"
+        ENGINE_CMD=(podman)
+        COMPOSE_CMD=(podman compose)
     elif command -v podman-compose >/dev/null 2>&1; then
-        ENGINE_CMD="podman"
-        COMPOSE_CMD="podman-compose"
+        ENGINE_CMD=(podman)
+        COMPOSE_CMD=(podman-compose)
     fi
 fi
 
@@ -171,6 +171,8 @@ stop_env() {
     dir=$(resolve_env_dir "$env") || { echo "Ambiente inválido: $env"; return 2; }
     echo "Parando ambiente $env..."
     cd "$dir" || return 1
+    local PROJECT_NAME
+    PROJECT_NAME=$(basename "$dir")
     run_compose -p "$PROJECT_NAME" down || return 1
     echo "Ambiente $env parado."
 }
