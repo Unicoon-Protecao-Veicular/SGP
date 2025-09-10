@@ -175,9 +175,6 @@ start_env() {
         return 1
     fi
 
-    echo "Aguardando $SLEEP_INTERVAL segundos..."
-    sleep $SLEEP_INTERVAL
-
     # -- ETAPA 2: Keycloak e serviços de suporte --
     echo "--- Etapa 2/5: Iniciando Keycloak e serviços de suporte..."
     run_compose -p "$PROJECT_NAME" --env-file .env up -d keycloak mailpit web-modeler-websockets || return 1
