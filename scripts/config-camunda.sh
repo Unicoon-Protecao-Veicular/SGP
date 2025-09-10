@@ -59,6 +59,47 @@ else
     echo "Configuração do ambiente '$ENV_TO_CONFIG' concluída."
 fi
 
+# --- Diretórios de dados necessários para bind mounts (host) ---
+# Cria e ajusta permissões para os diretórios usados como bind mounts no docker-compose
+# - /data/camunda/zeebe -> montado em /usr/local/zeebe/data (UID esperado: 1000:1000)
+# - /data/camunda/elastic -> montado em /usr/share/elasticsearch/data (UID esperado: 1000:0)
+echo "Garantindo diretórios de dados no host (/data/camunda)..."
+HOST_DATA_BASE="/data/camunda"
+ZEEBE_DATA_DIR="$HOST_DATA_BASE/zeebe"
+ELASTIC_DATA_DIR="$HOST_DATA_BASE/elastic"
+
+# Base
+if [ ! -d "$HOST_DATA_BASE" ]; then
+  sudo mkdir -p "$HOST_DATA_BASE"
+fi
+
+# Zeebe
+if [ ! -d "$ZEEBE_DATA_DIR" ]; then
+  echo "-> Criando $ZEEBE_DATA_DIR"
+  sudo mkdir -p "$ZEEBE_DATA_DIR"
+fi
+echo "-> Ajustando dono (1000:1000) e permissões (775) em $ZEEBE_DATA_DIR"
+sudo chown -R 1000:1000 "$ZEEBE_DATA_DIR" || true
+sudo chmod -R 775 "$ZEEBE_DATA_DIR" || true
+
+# Elasticsearch
+if [ ! -d "$ELASTIC_DATA_DIR" ]; then
+  echo "-> Criando $ELASTIC_DATA_DIR"
+  sudo mkdir -p "$ELASTIC_DATA_DIR"
+fi
+echo "-> Ajustando dono (1000:0) e permissões (775) em $ELASTIC_DATA_DIR"
+sudo chown -R 1000:0 "$ELASTIC_DATA_DIR" || true
+sudo chmod -R 775 "$ELASTIC_DATA_DIR" || true
+
+# SELinux: ajustar contexto se aplicável (evita Permission denied em distros com SELinux)
+if command -v getenforce >/dev/null 2>&1; then
+  SELINUX_STATE=$(getenforce 2>/dev/null || echo Disabled)
+  if [ "$SELINUX_STATE" != "Disabled" ]; then
+    echo "-> SELinux $SELINUX_STATE detectado. Aplicando contexto svirt_sandbox_file_t..."
+    sudo chcon -Rt svirt_sandbox_file_t "$ZEEBE_DATA_DIR" "$ELASTIC_DATA_DIR" 2>/dev/null || true
+  fi
+fi
+
 # --- Configuração Global do SystemD (executa apenas uma vez) ---
 CONFIG_FLAG_SYSTEMD="$BASE_DIR/.systemd_configured"
 
