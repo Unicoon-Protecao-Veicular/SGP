@@ -52,6 +52,41 @@ run_engine() {
     return 1
 }
 
+# Aguarda um container ficar healthy (timeout padrão: 180s)
+wait_container_healthy() {
+    local name="$1"
+    local timeout="${2:-180}"
+    local interval=5
+    local elapsed=0
+    echo "Aguardando container '$name' ficar healthy (timeout ${timeout}s)..."
+    while true; do
+        local status
+        status=$( "${SUDO_PREFIX[@]}" "${ENGINE_CMD[@]}" inspect \
+                    --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}}' "$name" 2>/dev/null || echo "unknown")
+        case "$status" in
+            healthy)
+                echo "OK: '$name' está healthy."
+                return 0
+                ;;
+            unhealthy)
+                echo "ATENÇÃO: '$name' está unhealthy (tentar novamente)..."
+                ;;
+            starting|none|unknown)
+                # continuar aguardando
+                ;;
+        esac
+        sleep "$interval"
+        elapsed=$((elapsed+interval))
+        if [ "$elapsed" -ge "$timeout" ]; then
+            echo "ERRO: Timeout esperando '$name' ficar healthy."
+            # Mostra logs para ajudar
+            "${SUDO_PREFIX[@]}" "${ENGINE_CMD[@]}" logs --tail=200 "$name" || true
+            return 1
+        fi
+    done
+}
+
+
 if command -v docker >/dev/null 2>&1; then
     if docker compose version >/dev/null 2>&1; then
         ENGINE_CMD=(docker)
@@ -134,6 +169,12 @@ start_env() {
     # -- ETAPA 1: Bancos de dados e Elasticsearch --
     echo "--- Etapa 1/5: Iniciando bancos de dados e Elasticsearch..."
     run_compose -p "$PROJECT_NAME" --env-file .env up -d postgres web-modeler-db elasticsearch || return 1
+
+    if ! wait_container_healthy "elasticsearch" 240; then
+        echo "Elasticsearch não ficou healthy. Abortando start para evitar efeito cascata."
+        return 1
+    fi
+
     echo "Aguardando $SLEEP_INTERVAL segundos..."
     sleep $SLEEP_INTERVAL
 
@@ -151,7 +192,13 @@ start_env() {
 
     # -- ETAPA 4: Core do Camunda (Zeebe, Operate, Tasklist, Connectors) --
     echo "--- Etapa 4/5: Iniciando o core do Camunda..."
-    run_compose -p "$PROJECT_NAME" --env-file .env up -d zeebe operate tasklist connectors || return 1
+    # 4.1) Zeebe primeiro (não depende do ES)
+    run_compose -p "$PROJECT_NAME" --env-file .env up -d zeebe || return 1
+    echo "Aguardando $SLEEP_INTERVAL segundos para o Zeebe estabilizar..."
+    sleep $SLEEP_INTERVAL
+
+    # 4.2) Operate/Tasklist/Connectors depois que ES já estiver healthy (garantido acima)
+    run_compose -p "$PROJECT_NAME" --env-file .env up -d operate tasklist connectors || return 1
     echo "Aguardando $SLEEP_INTERVAL segundos para os componentes principais se conectarem..."
     sleep $SLEEP_INTERVAL
 
@@ -212,6 +259,14 @@ case "$1" in
     status)
         echo "Containers em execução:"
         run_engine ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+
+        echo
+        echo "Health (se disponível):"
+        for s in elasticsearch zeebe operate tasklist identity connectors keycloak nginx postgres; do
+            if "${SUDO_PREFIX[@]}" "${ENGINE_CMD[@]}" inspect "$s" >/dev/null 2>&1; then
+                "${SUDO_PREFIX[@]}" "${ENGINE_CMD[@]}" inspect --format '{{.Name}} -> {{if .State.Health}}{{.State.Health.Status}}{{else}}(no healthcheck){{end}}' "$s"
+            fi
+        done
         ;;
     *)
         echo "Uso: $0 {start|stop|restart|clean} {dev|staging}"
