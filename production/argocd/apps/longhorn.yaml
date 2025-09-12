@@ -6,13 +6,26 @@ metadata:
   namespace: argocd
 spec:
   project: camunda-platform
-  destination:
-    namespace: longhorn-system
-    server: https://kubernetes.default.svc
   source:
-    repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
-    path: production/kustomize/longhorn
-    targetRevision: HEAD
+    repoURL: "https://charts.longhorn.io"
+    chart: longhorn
+    targetRevision: "1.9.1"
+    helm:
+      values: |
+        enablePreUpgradeChecker: false
+        manager:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+            - key: "node-role.kubernetes.io/master"
+              operator: "Exists"
+              effect: "NoSchedule"
+        settings:
+          createDefaultDiskLabeledNodes: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: longhorn-system
   syncPolicy:
     automated:
       prune: true
