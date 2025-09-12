@@ -111,6 +111,8 @@ elasticsearch:
   enabled: true
   master:
     replicas: 1
+    # Em um cluster de nó único, a anti-afinidade deve ser desabilitada.
+    affinity: {}
     resources:
       requests:
         cpu: "500m"
@@ -125,6 +127,8 @@ elasticsearch:
       storageClass: longhorn
   data:
     replicas: 1
+    # Em um cluster de nó único, a anti-afinidade deve ser desabilitada.
+    affinity: {}
     resources:
       requests:
         cpu: "2000m"
