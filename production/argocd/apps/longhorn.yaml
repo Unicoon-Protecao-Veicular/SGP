@@ -11,7 +11,7 @@ spec:
     chart: longhorn
     targetRevision: "1.9.1"
     helm:
-      values: |
+      valuesObject:
         enablePreUpgradeChecker: false
         manager:
           tolerations:
