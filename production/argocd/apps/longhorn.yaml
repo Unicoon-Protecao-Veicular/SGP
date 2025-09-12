@@ -29,3 +29,8 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  ignoreDifferences:
+  - group: ""
+    kind: "ServiceAccount"
+    name: "longhorn-service-account"
+    namespace: "longhorn-system"
