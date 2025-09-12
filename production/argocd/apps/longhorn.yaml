@@ -2,9 +2,6 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  annotations:
-    # Esta aplicação agora é autossuficiente e não depende de outras waves.
-    argocd.argoproj.io/sync-wave: "0" # Mantido para consistência, mas não essencial.
   name: longhorn
   namespace: argocd
 spec:
@@ -13,24 +10,12 @@ spec:
     namespace: longhorn-system
     server: https://kubernetes.default.svc
   source:
-    repoURL: https://charts.longhorn.io
-    chart: longhorn
-    targetRevision: 1.9.1 # Alinhado com a versão do script de bootstrap para consistência
-    helm:
-      releaseName: longhorn
-      valuesObject:
-        enablePreUpgradeChecker: false
-        defaultSettings:
-          defaultDataPath: /var/lib/longhorn
-          defaultReplicaCount: 1
+    repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
+    path: production/kustomize/longhorn
+    targetRevision: HEAD
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-  ignoreDifferences:
-  - group: ""
-    kind: "ServiceAccount"
-    name: "longhorn-service-account"
-    namespace: "longhorn-system"
