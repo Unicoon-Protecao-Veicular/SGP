@@ -19,6 +19,7 @@ spec:
     helm:
       releaseName: longhorn
       valuesObject:
+        enablePreUpgradeChecker: false
         defaultSettings:
           defaultDataPath: /var/lib/longhorn
           defaultReplicaCount: 1
@@ -28,3 +29,8 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+  ignoreDifferences:
+  - group: ""
+    kind: "ServiceAccount"
+    name: "longhorn-service-account"
+    namespace: "longhorn-system"
