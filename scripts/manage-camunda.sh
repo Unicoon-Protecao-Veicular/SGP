@@ -86,7 +86,6 @@ wait_container_healthy() {
     done
 }
 
-
 if command -v docker >/dev/null 2>&1; then
     if docker compose version >/dev/null 2>&1; then
         ENGINE_CMD=(docker)
