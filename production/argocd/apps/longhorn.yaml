@@ -19,9 +19,6 @@ spec:
     helm:
       releaseName: longhorn
       valuesObject:
-        # Agora, a própria aplicação principal do Longhorn gerenciará seu ServiceAccount.
-        serviceAccount:
-          create: true
         defaultSettings:
           defaultDataPath: /var/lib/longhorn
           defaultReplicaCount: 1
