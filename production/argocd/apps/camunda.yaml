@@ -18,10 +18,10 @@ spec:
       helm:
         releaseName: camunda-platform
         valueFiles:
-          - $values/production/helm-values/camunda/values.yaml
+          - $git-values/production/helm-values/camunda/values.yaml
     - repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
       targetRevision: HEAD
-      ref: values
+      ref: git-values
   syncPolicy:
     automated:
       prune: true
