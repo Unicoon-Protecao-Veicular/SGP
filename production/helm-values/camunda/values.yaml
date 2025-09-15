@@ -1,95 +1,60 @@
-# Values for Camunda Platform 8 (Chart Version 12.6.0)
-# Optimized for a SINGLE-NODE k3s cluster with Longhorn storage.
+# Values for Camunda Platform 8 (Chart Version 12.5.0)
+# Optimized for a single-node k3s cluster.
 
 global:
   image:
     pullPolicy: IfNotPresent
   ingress:
     enabled: false
-  # --- CONFIGURAÇÃO MAIS IMPORTANTE: Usar Longhorn para TUDO ---
-  storageClass: "longhorn" # Força todos os componentes a usarem Longhorn
+  # Using longhorn as the default storage class as configured in the original file
+  storageClass: longhorn
   multitenancy:
     enabled: false
 
-# --- Zeebe Configuration ---
+# Zeebe is the workflow engine.
+# For a single node, we ensure replicas, cluster size, and replication factor are all 1.
 zeebe:
   enabled: true
-  # Configuração para SINGLE NODE: 1 réplica para tudo.
-  replicas: 1                # Número de pods Zeebe Broker
-  clusterSize: "1"           # Tamanho do cluster Zeebe
-  partitionCount: "1"        # Número de partições
-  replicationFactor: "1"     # Fator de replicação (deve ser <= clusterSize)
-
-  # Ajuste de performance para single node
+  # Correct key for replicas in this chart version
+  replicas: 1
+  clusterSize: 1
+  partitionCount: 1
+  replicationFactor: 1
+  # Pod resource requests and limits from your original file
   resources:
     requests:
       cpu: "2000m"
-      memory: "4Gi"          # Reduzido para caber no nó com outros componentes
-    limits:
-      cpu: "4000m"
       memory: "8Gi"
+    limits:
+      cpu: "8000m"
+      memory: "12Gi"
+  # Environment variables from your original file
   env:
     - name: ZEEBE_BROKER_THREADS_CPU_THREAD_COUNT
-      value: "2"             # Ajustado para uma CPU mais moderada
+      value: "6"
     - name: ZEEBE_BROKER_THREADS_IO_THREAD_COUNT
-      value: "1"
+      value: "2"
+  # Persistence settings
   persistence:
     enabled: true
-    size: 20Gi               # Reduzido para teste, pode aumentar se necessário
+    size: 32Gi
 
   gateway:
     enabled: true
-    replicas: 1              # Apenas 1 gateway
+    # Correct key for replicas in this chart version
+    replicas: 1
+    # Pod resource requests and limits from your original file
     resources:
       requests:
         cpu: "500m"
         memory: "512Mi"
       limits:
-        cpu: "1000m"
+        cpu: "1500m"
         memory: "1Gi"
     service:
-      type: LoadBalancer     # Para acesso externo, se necessário
+      type: LoadBalancer
 
-# --- Elasticsearch Configuration (SINGLE NODE SETUP) ---
-elasticsearch:
-  enabled: true
-  # CONFIGURAÇÃO CRÍTICA: Modo single-node
-  replicas: 1
-  minimumMasterNodes: 1
-  discovery:
-    type: single-node        # Força o modo single-node
-
-  # Ajusta a JVM para os recursos solicitados
-  esJavaOpts: "-Xms4g -Xmx4g" # 4GB heap, dentro do limite de 8GB solicitado
-
-  resources:
-    requests:
-      cpu: "2000m"
-      memory: "8Gi"          # Solicita 8GB, a JVM usará 4GB
-    limits:
-      cpu: "4000m"
-      memory: "12Gi"
-  persistence:
-    enabled: true
-    size: 20Gi               # PVC já existe com 20Gi, mantendo o tamanho
-    storageClass: "longhorn" # Explicitamente usa Longhorn
-
-  # Configurações específicas para single-node e evitar criação de réplicas
-  clusterName: "elastic"
-  name: "camunda-platform-elasticsearch-master"
-  roles:
-    master: "true"
-    data: "true"
-    ingest: "true"
-    remoteClusterClient: "true"
-    ml: "false"
-    transform: "false"
-  bootstrap:
-    memory_lock: false
-  seedHosts: "[]"
-  initialMasterNodes: "camunda-platform-elasticsearch-master-0"
-
-# --- Operate Configuration ---
+# Operate is the monitoring tool.
 operate:
   enabled: true
   replicas: 1
@@ -101,7 +66,7 @@ operate:
       cpu: "1000m"
       memory: "2Gi"
 
-# --- Tasklist Configuration ---
+# Tasklist is the user task application.
 tasklist:
   enabled: true
   replicas: 1
@@ -113,7 +78,7 @@ tasklist:
       cpu: "1000m"
       memory: "2Gi"
 
-# --- Optimize Configuration ---
+# Optimize is the process analysis tool.
 optimize:
   enabled: true
   replicas: 1
@@ -125,7 +90,7 @@ optimize:
       cpu: "1000m"
       memory: "2Gi"
 
-# --- Connectors Configuration ---
+# Connectors is the integration component.
 connectors:
   enabled: true
   replicas: 1
@@ -137,7 +102,7 @@ connectors:
       cpu: "500m"
       memory: "1Gi"
 
-# --- Identity & Auth Configuration ---
+# Identity is the authentication service.
 identity:
   enabled: true
   replicas: 1
@@ -149,6 +114,7 @@ identity:
       cpu: "1000m"
       memory: "1Gi"
 
+  # Keycloak is used by Identity.
   keycloak:
     enabled: true
     replicas: 1
@@ -159,10 +125,47 @@ identity:
       limits:
         cpu: "1500m"
         memory: "2Gi"
+    # PostgreSQL for Keycloak
     postgresql:
       enabled: true
       primary:
         persistence:
           enabled: true
-          size: 8Gi
-          storageClass: "longhorn" # Garante que Keycloak também use Longhorn
+          size: 20Gi
+
+# Elasticsearch is the data store.
+elasticsearch:
+  enabled: true
+  master:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+  data:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+  ingest:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
