@@ -53,7 +53,9 @@ zeebe:
         memory: "1Gi"
     service:
       type: LoadBalancer
-    affinity: {}
+    affinity: 
+      podAntiAffinity: null
+        
 
 # Operate is the monitoring tool.
 operate:
