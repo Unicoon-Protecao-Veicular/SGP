@@ -134,11 +134,18 @@ identity:
       - name: KEYCLOAK_DATABASE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: camunda-platform-postgresql
+            # Use the centrally managed secret from Sealed Secrets
+            name: postgresql-credentials
             key: password
     # PostgreSQL for Keycloak
     postgresql:
       enabled: true
+      # Configure PostgreSQL to use the existing secret from Sealed Secrets
+      auth:
+        existingSecret: "postgresql-credentials"
+        secretKeys:
+          adminPasswordKey: "postgres-password"
+          userPasswordKey: "password"
       primary:
         persistence:
           enabled: true
