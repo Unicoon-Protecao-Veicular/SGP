@@ -75,7 +75,7 @@ echo ""
 echo "Criando o secret temporário e tentando criptografá-lo com kubeseal..."
 echo "Isso pode levar um momento, pois precisa contatar o controller no cluster."
 
-if kubeseal --format=yaml < "$TEMP_SECRET_FILE" > "$SEALED_SECRET_FILE"; then
+if kubeseal --controller-name sealed-secrets --format=yaml < "$TEMP_SECRET_FILE" > "$SEALED_SECRET_FILE"; then
     echo ""
     echo "SUCESSO!" 
     echo "O arquivo criptografado foi salvo em: $SEALED_SECRET_FILE"
@@ -97,4 +97,4 @@ echo "O arquivo de secret temporário foi removido com segurança."
 echo ""
 echo "Próximos passos:"
 echo "1. Faça o commit do arquivo '$SEALED_SECRET_FILE'."
-echo "2. Garanta que o ArgoCD aplique as alterações ao cluster."
+echo "2. Execute 'bash production/scripts/bootstrap-apps.sh' para que o Argo CD instale todas as aplicações."

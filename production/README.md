@@ -18,15 +18,13 @@ Este diretório contém toda a configuração e scripts para implantar o ambient
 
 Para implantar o ambiente do zero em um novo servidor, siga os passos:
 
-1.  **Preparar o Servidor**: Clone este repositório em um servidor Linux com Docker instalado.
-
-2.  **Executar o Setup Principal**: O script principal orquestra a instalação de todas as dependências de infraestrutura.
+1.  **Executar o Setup Principal**: O script principal orquestra a instalação de todas as dependências de infraestrutura.
     ```bash
     bash production/scripts/setup-production.sh
     ```
     Este script irá instalar: K3s, Helm, ArgoCD e o controller do Sealed Secrets.
 
-3.  **Gerar o Segredo do Banco de Dados**: As senhas do banco de dados não são armazenadas no Git. Você precisa gerá-las e criptografá-las usando o script que preparamos.
+2.  **Gerar o Segredo do Banco de Dados na sua máquina**: As senhas do banco de dados não são armazenadas no Git. Você precisa gerá-las e criptografá-las usando o script que preparamos rodando na sua máquina local.
     ```bash
     # Dê permissão de execução primeiro
     chmod +x production/scripts/create-sealed-secret.sh
