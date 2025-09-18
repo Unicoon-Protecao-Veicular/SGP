@@ -133,6 +133,9 @@ identity:
     # PostgreSQL for Keycloak
     postgresql:
       enabled: true
+      auth:
+        secretKeys:
+          passwordKey: "db-password"
       primary:
         persistence:
           enabled: true
