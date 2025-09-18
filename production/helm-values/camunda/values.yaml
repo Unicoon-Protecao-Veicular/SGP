@@ -131,8 +131,11 @@ identity:
         cpu: "1500m"
         memory: "2Gi"
     extraEnvVars:
-      - name: KEYCLOAK_DATABASE_PASSWORD_FILE
-        value: "/opt/bitnami/keycloak/secrets/password"
+      - name: KEYCLOAK_DATABASE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: camunda-platform-postgresql
+            key: password
     # PostgreSQL for Keycloak
     postgresql:
       enabled: true
