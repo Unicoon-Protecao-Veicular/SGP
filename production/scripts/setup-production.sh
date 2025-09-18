@@ -13,6 +13,9 @@ bash "$(dirname "$0")/bootstrap-argocd.sh"
 echo "==> Installing Argo CD CLI (Client Tool)"
 bash "$(dirname "$0")/bootstrap-argocd-cli.sh"
 
+echo "==> Installing Sealed Secrets Controller"
+bash "$(dirname "$0")/install-sealed-secrets.sh"
+
 echo "==> Configuring Argo CD Repository Access (SSH)"
 bash "$(dirname "$0")/configure-argocd-repo.sh"
 
