@@ -13,7 +13,29 @@ export INSTALL_K3S_EXEC="--disable traefik --write-kubeconfig-mode 644"
 curl -sfL https://get.k3s.io | sh -
 
 echo "Waiting for k3s kubeconfig..."
-sleep 5
+i=0
+while [ ! -f /etc/rancher/k3s/k3s.yaml ]; do
+  if [ $i -gt 30 ]; then
+    echo "Timed out waiting for /etc/rancher/k3s/k3s.yaml" >&2
+    exit 1
+  fi
+  echo "Waiting for kubeconfig file... ($i/30)"
+  sleep 2
+  i=$((i+1))
+done
+
+echo "Waiting for Kubernetes API server to be ready..."
+i=0
+until /usr/local/bin/k3s kubectl get nodes >/dev/null 2>&1; do
+  if [ $i -gt 60 ]; then
+    echo "Timed out waiting for Kubernetes API server." >&2
+    exit 1
+  fi
+  echo "Waiting for API server... ($i/60)"
+  sleep 2
+  i=$((i+1))
+done
+echo "Kubernetes API server is ready."
 
 KUBECONFIG_PATH="/etc/rancher/k3s/k3s.yaml"
 if [ -f "$KUBECONFIG_PATH" ]; then

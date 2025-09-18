@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
 # Instala o controller do Sealed Secrets para gerenciamento seguro de senhas
 echo "==> Adicionando repositório Helm do Sealed Secrets..."
 helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
