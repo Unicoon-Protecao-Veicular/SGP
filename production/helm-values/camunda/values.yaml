@@ -1,4 +1,4 @@
-# Values for Camunda Platform 8 (Chart Version 12.5.0)
+# Values for Camunda Platform 8 (Chart Version 12.6.0)
 # Optimized for a single-node k3s cluster.
 
 global:
@@ -130,12 +130,12 @@ identity:
       limits:
         cpu: "1500m"
         memory: "2Gi"
+    extraEnvVars:
+      - name: KEYCLOAK_DATABASE_PASSWORD_FILE
+        value: "/opt/bitnami/keycloak/secrets/password"
     # PostgreSQL for Keycloak
     postgresql:
       enabled: true
-      auth:
-        secretKeys:
-          passwordKey: "db-password"
       primary:
         persistence:
           enabled: true
