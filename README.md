@@ -13,3 +13,12 @@ A implantação é totalmente automatizada e gerenciada via GitOps.
 Para instruções detalhadas sobre como implantar o ambiente de produção do zero, consulte o guia no diretório de produção:
 
 **[>> Guia de Implantação em Produção](./production/README.md)**
+
+## Próximos passos (ambientes dev/staging)
+
+- Execute a configuração apenas para `dev` ou `staging`:
+  - `bash scripts/config-camunda.sh dev`
+  - `bash scripts/config-camunda.sh staging`
+- O script valida o ambiente e recusa qualquer valor diferente de `dev` ou `staging`.
+- Definir variáveis em `dev/.env` e `staging/.env` (não commitar segredos reais).
+
