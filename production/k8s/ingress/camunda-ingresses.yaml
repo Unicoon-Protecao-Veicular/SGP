@@ -5,6 +5,8 @@ metadata:
   namespace: camunda
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
 spec:
   ingressClassName: nginx
   tls:
@@ -15,36 +17,36 @@ spec:
     - host: consultorunicoon.com.br
       http:
         paths:
-          - path: /operate
-            pathType: Prefix
+          - path: /operate(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: camunda-platform-operate
                 port:
                   number: 80
-          - path: /tasklist
-            pathType: Prefix
+          - path: /tasklist(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: camunda-platform-tasklist
                 port:
                   number: 80
-          - path: /optimize
-            pathType: Prefix
+          - path: /optimize(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: camunda-platform-optimize
                 port:
                   number: 80
-          - path: /identity
-            pathType: Prefix
+          - path: /identity(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: camunda-platform-identity
                 port:
                   number: 80
-          - path: /keycloak
-            pathType: Prefix
+          - path: /keycloak(/|$)(.*)
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: camunda-platform-keycloak
