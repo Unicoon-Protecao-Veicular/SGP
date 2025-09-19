@@ -55,7 +55,7 @@ zeebe-gateway:
   replicas: 1
   resources:
     requests:
-      cpu: "500m"
+      cpu: "300m"
       memory: "512Mi"
     limits:
       cpu: "1500m"
@@ -72,7 +72,7 @@ operate:
   replicas: 1
   resources:
     requests:
-      cpu: "500m"
+      cpu: "300m"
       memory: "1Gi"
     limits:
       cpu: "1000m"
@@ -84,7 +84,7 @@ tasklist:
   replicas: 1
   resources:
     requests:
-      cpu: "500m"
+      cpu: "300m"
       memory: "1Gi"
     limits:
       cpu: "1000m"
@@ -96,7 +96,7 @@ optimize:
   replicas: 1
   resources:
     requests:
-      cpu: "500m"
+      cpu: "300m"
       memory: "1Gi"
     limits:
       cpu: "1000m"
@@ -132,7 +132,7 @@ identity:
     replicas: 1
     resources:
       requests:
-        cpu: "500m"
+        cpu: "300m"
         memory: "1Gi"
       limits:
         cpu: "1500m"
