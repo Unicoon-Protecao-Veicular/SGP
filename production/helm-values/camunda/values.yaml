@@ -6,6 +6,13 @@ global:
     pullPolicy: IfNotPresent
   ingress:
     enabled: false
+    host: consultorunicoon.com.br
+    tls:
+      enabled: true
+      secretName: camunda-tls
+  identity:
+    auth:
+      publicIssuerUrl: "https://consultorunicoon.com.br/auth/realms/camunda-platform"
   # Using longhorn as the default storage class as configured in the original file
   storageClass: longhorn
   multitenancy:
