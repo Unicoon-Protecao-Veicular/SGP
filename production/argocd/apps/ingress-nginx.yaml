@@ -40,6 +40,10 @@ spec:
             worker-connections: "16384"
             keep-alive: "75"
             keep-alive-requests: "10000"
+            # Correção para ERR_TOO_MANY_REDIRECTS
+            use-forwarded-headers: "true"
+            # Melhoria de segurança
+            proxy-real-ip-cidr: "10.42.0.0/16"
   syncPolicy:
     automated:
       prune: true
