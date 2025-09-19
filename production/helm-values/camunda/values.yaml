@@ -5,7 +5,7 @@ global:
   image:
     pullPolicy: IfNotPresent
   ingress:
-    enabled: false
+    enabled: true
     host: consultorunicoon.com.br
     tls:
       enabled: true
