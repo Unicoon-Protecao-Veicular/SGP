@@ -126,7 +126,12 @@ identity:
       cpu: "1000m"
       memory: "1Gi"
 
-  # Keycloak is used by Identity.
+  # Configuração para usar o SealedSecret versionado
+  auth:
+    existingSecret: camunda-platform-identity-secret
+    existingSecretKey: client-secret
+
+  # Keycloak é usado pelo Identity.
   keycloak:
     enabled: true
     replicas: 1
@@ -141,13 +146,13 @@ identity:
       - name: KEYCLOAK_DATABASE_PASSWORD
         valueFrom:
           secretKeyRef:
-            # Use the centrally managed secret from Sealed Secrets
+            # Usa o Secret centralizado (via SealedSecret)
             name: postgresql-credentials
             key: password
-    # PostgreSQL for Keycloak
+    # PostgreSQL para o Keycloak
     postgresql:
       enabled: true
-      # Configure PostgreSQL to use the existing secret from Sealed Secrets
+      # Configura para usar o Secret já versionado
       auth:
         existingSecret: "postgresql-credentials"
         secretKeys:
@@ -157,6 +162,7 @@ identity:
         persistence:
           enabled: true
           size: 20Gi
+
 
 # Elasticsearch is the data store.
 elasticsearch:
