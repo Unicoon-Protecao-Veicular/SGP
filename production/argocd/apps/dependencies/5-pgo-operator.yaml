@@ -1,21 +1,35 @@
-# Path: production/argocd/apps/dependencies/5-pgo-operator.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  # Mantendo o nome e o namespace originais da sua aplicação.
   name: pgo-operator
   namespace: argocd
+  # Mantendo as anotações originais.
   annotations:
-    # Wave 5: Instala o operador de Postgres.
     argocd.argoproj.io/sync-wave: "5"
 spec:
+  # Mantendo o projeto original.
   project: camunda-platform
+
+  destination:
+    # Mantendo o destino original.
+    namespace: postgres-operator
+    server: https://kubernetes.default.svc
+
   source:
-    repoURL: oci://registry.developers.crunchydata.com/crunchydata
-    chart: pgo
-    targetRevision: 5.6.0 # Fixar a versão do chart
+    # CORREÇÃO 1: O 'repoURL' aponta para o caminho do repositório OCI,
+    # sem o prefixo 'oci://' e sem o nome do chart no final.
+    repoURL: 'registry.developers.crunchydata.com/crunchydata'
+
+    # CORREÇÃO 2: O nome do chart é especificado separadamente no campo 'chart'.
+    chart: 'pgo'
+
+    # A versão do chart que você deseja implantar.
+    targetRevision: 5.6.0
+
     helm:
+      # Mantendo seus valores Helm personalizados.
       values: |
-        # Permite que os pods do operador rodem no nó de controle (master)
         tolerations:
           - key: "node-role.kubernetes.io/control-plane"
             operator: "Exists"
@@ -23,9 +37,8 @@ spec:
           - key: "node-role.kubernetes.io/master"
             operator: "Exists"
             effect: "NoSchedule"
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: postgres-operator # Namespace padrão para o PGO
+
+  # Mantendo sua política de sincronização original.
   syncPolicy:
     automated:
       prune: true
