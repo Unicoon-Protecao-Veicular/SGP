@@ -1,0 +1,34 @@
+# Path: production/helm-values/elasticsearch/cluster-cr.yaml
+# Este é um Recurso Customizado (CR) que o operador ECK irá usar para criar o cluster.
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: camunda-es-cluster
+  namespace: camunda
+spec:
+  version: 8.5.1 # Versão compatível com Camunda 8
+  nodeSets:
+  - name: default
+    count: 1 # Apenas um nó para ambiente de nó único
+    config:
+      node.store.allow_mmap: false # Configuração recomendada para ambientes com recursos limitados
+    podTemplate:
+      spec:
+        # Permite que o pod rode no nó de controle (master)
+        tolerations:
+        - key: "node-role.kubernetes.io/control-plane"
+          operator: "Exists"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 30Gi
+        storageClassName: longhorn
