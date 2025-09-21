@@ -4,6 +4,8 @@ set -euo pipefail
 echo "==> Installing k3s (root required)"
 bash "$(dirname "$0")/bootstrap-k3s.sh"
 
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
 echo "==> Installing Helm"
 bash "$(dirname "$0")/bootstrap-helm.sh"
 
