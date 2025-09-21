@@ -1,32 +1,32 @@
-# Path: production/argocd/apps/longhorn.yaml
+# Path: production/argocd/apps/platform/1-longhorn.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: longhorn
   namespace: argocd
+  annotations:
+    # Wave 1: Componente de infraestrutura mais básico.
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   project: camunda-platform
   source:
     repoURL: "https://charts.longhorn.io"
     chart: longhorn
-    targetRevision: "1.9.1"
+    targetRevision: "1.6.2" # É uma boa prática fixar a versão do chart.
     helm:
       valuesObject:
-        preUpgradeChecker:
-          jobEnabled: false
-        manager:
-          tolerations:
-            - key: "node-role.kubernetes.io/control-plane"
-              operator: "Exists"
-              effect: "NoSchedule"
-            - key: "node-role.kubernetes.io/master"
-              operator: "Exists"
-              effect: "NoSchedule"
-        settings:
-          createDefaultDiskLabeledNodes: true
-        ui:
-          service:
-            type: ClusterIP
+        persistence:
+          defaultClassReplicaCount: 1 # Otimizado para nó único
+        defaultSettings:
+          defaultDataPath: "/var/lib/longhorn/"
+        # Permite que os pods do Longhorn rodem no nó de controle (master)
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/master"
+            operator: "Exists"
+            effect: "NoSchedule"
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
