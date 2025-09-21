@@ -23,6 +23,7 @@ DEPLOY_GROUP=${DEPLOY_GROUP:-camunda-deploy}
 TARGET_DIR=${TARGET_DIR:-/srv/camunda}
 KEY_NAME=${KEY_NAME:-camunda-deploy}
 REPO_SSH_URL=""
+GIT_BRANCH=""
 GIT_NAME=${GIT_NAME:-"Camunda Deploy"}
 GIT_EMAIL=${GIT_EMAIL:-"camunda-deploy@$(hostname -f 2>/dev/null || hostname)"}
 ADD_USERS=()
@@ -37,6 +38,7 @@ Uso: sudo bash $0 --repo <ssh_url> [opções]
 
 Opções:
   --repo <ssh_url>         URL SSH do repositório (ex.: git@github.com:org/repo.git)
+  --branch <branch>        Branch a ser clonada (padrão: branch default do repositório)
   --target-dir <dir>       Diretório de destino do clone (padrão: /srv/camunda)
   --key-name <nome>        Nome base do par de chaves em ~/.ssh (padrão: camunda-deploy)
   --git-name <nome>        Nome do usuário Git local no repositório (padrão: Camunda Deploy)
@@ -47,6 +49,7 @@ Opções:
 Exemplo:
   sudo bash $0 \
     --repo git@github.com:seu-usuario/camunda-config.git \
+    --branch main \
     --add-user usuario1 --add-user usuario2
 EOF
 }
@@ -56,6 +59,8 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --repo)
       REPO_SSH_URL=${2:-}; shift 2 || true ;;
+    --branch)
+      GIT_BRANCH=${2:-}; shift 2 || true ;;
     --target-dir)
       TARGET_DIR=${2:-}; shift 2 || true ;;
     --key-name)
@@ -72,6 +77,7 @@ while [[ $# -gt 0 ]]; do
       warn "Argumento desconhecido: $1"; usage; exit 2 ;;
   esac
 done
+
 
 # ---- Função para instalar dependências ----
 install_dependencies() {
@@ -174,10 +180,19 @@ if [[ -n "$REPO_SSH_URL" ]]; then
   else
     log "Clonando repositório em $TARGET_DIR"
     # Aceita automaticamente a key de host do GitHub na primeira conexão
-    sudo -u "$DEPLOY_USER" -H env GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=accept-new' \
-      git clone "$REPO_SSH_URL" "$TARGET_DIR" || {
-        warn "Falha ao clonar. Verifique se a Deploy Key foi adicionada ao GitHub e tente novamente."
-      }
+    if [[ -n "$GIT_BRANCH" ]]; then
+      log "Clonando branch $GIT_BRANCH..."
+      sudo -u "$DEPLOY_USER" -H env GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=accept-new' \
+        git clone --branch "$GIT_BRANCH" "$REPO_SSH_URL" "$TARGET_DIR" || {
+          warn "Falha ao clonar. Verifique se a Deploy Key foi adicionada e se a branch '$GIT_BRANCH' existe."
+        }
+    else
+      log "Clonando branch padrão..."
+      sudo -u "$DEPLOY_USER" -H env GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=accept-new' \
+        git clone "$REPO_SSH_URL" "$TARGET_DIR" || {
+          warn "Falha ao clonar. Verifique se a Deploy Key foi adicionada ao GitHub e tente novamente."
+        }
+    fi
   fi
 
   if [[ -d "$TARGET_DIR/.git" ]]; then
