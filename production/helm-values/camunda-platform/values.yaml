@@ -1,0 +1,107 @@
+# Path: production/helm-values/camunda-platform/values.yaml
+# Configurações para o Chart do Camunda Platform (versão 8.5+)
+# Arquitetura 100% Desacoplada: Todas as dependências são externas.
+
+global:
+  image:
+    pullPolicy: IfNotPresent
+  # Configuração central do Ingress para todos os componentes web (Operate, Tasklist, etc.)
+  ingress:
+    enabled: true
+    host: consultorunicoon.com.br
+    className: "nginx" # Especifique a classe do Ingress Controller
+    tls:
+      enabled: true
+      # Este secret deve ser criado pelo seu cert-manager ou manualmente.
+      secretName: camunda-tls
+  # Configuração global de identidade
+  identity:
+    auth:
+      # URL pública do nosso Keycloak externo
+      publicIssuerUrl: "https://auth.consultorunicoon.com.br/auth/realms/camunda-platform"
+  # StorageClass padrão para todos os PVCs
+  storageClass: longhorn
+
+# --- Zeebe (Workflow Engine) ---
+# Otimizado para nó único, sem replicação.
+zeebe:
+  enabled: true
+  clusterSize: 1
+  partitionCount: 1
+  replicationFactor: 1
+  # Desabilita a anti-afinidade para permitir agendamento em um único nó.
+  affinity: {}
+  resources:
+    requests:
+      cpu: "1500m"
+      memory: "4Gi"
+    limits:
+      cpu: "3000m"
+      memory: "6Gi"
+  persistence:
+    enabled: true
+    size: 20Gi
+
+zeebeGateway:
+  enabled: true
+  replicas: 1
+  affinity: {}
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1000m"
+      memory: "2Gi"
+
+# --- Componentes Web ---
+operate:
+  enabled: true
+  # Conecta-se ao cluster Elasticsearch externo
+  elasticsearch:
+    # O nome do serviço do Elasticsearch segue o padrão: {cluster-cr-name}-es-http.{namespace}
+    url: http://camunda-es-cluster-es-http.camunda.svc.cluster.local:9200
+  auth:
+    # Usa o secret consolidado
+    existingSecret: camunda-credentials
+    existingSecretKey: operate-secret
+
+tasklist:
+  enabled: true
+  elasticsearch:
+    url: http://camunda-es-cluster-es-http.camunda.svc.cluster.local:9200
+  auth:
+    existingSecret: camunda-credentials
+    existingSecretKey: tasklist-secret
+
+optimize:
+  enabled: true
+  elasticsearch:
+    url: http://camunda-es-cluster-es-http.camunda.svc.cluster.local:9200
+  auth:
+    existingSecret: camunda-credentials
+    existingSecretKey: optimize-secret
+
+# --- Identity ---
+# Configura o Identity para se conectar ao Keycloak externo.
+identity:
+  enabled: true
+  # O nome do serviço do nosso Keycloak externo (chart bitnami)
+  keycloakFullURL: "http://keycloak.camunda.svc.cluster.local:8080"
+  auth:
+    existingSecret: camunda-credentials
+    existingSecretKey: identity-client-secret
+
+# ---------------------------------------------------------------------------
+# DEPENDÊNCIAS DESABILITADAS
+# A instalação e gerenciamento agora são feitos por charts/operadores dedicados.
+# ---------------------------------------------------------------------------
+elasticsearch:
+  enabled: false
+
+postgresql:
+  enabled: false
+
+# O Keycloak interno do chart do Camunda também é desabilitado.
+keycloak:
+  enabled: false
