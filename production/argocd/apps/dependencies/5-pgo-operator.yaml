@@ -1,0 +1,34 @@
+# Path: production/argocd/apps/dependencies/5-pgo-operator.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pgo-operator
+  namespace: argocd
+  annotations:
+    # Wave 5: Instala o operador de Postgres.
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: camunda-platform
+  source:
+    repoURL: https://charts.crunchydata.com/
+    chart: pgo
+    targetRevision: 5.6.0 # Fixar a versão do chart
+    helm:
+      values: |
+        # Permite que os pods do operador rodem no nó de controle (master)
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/master"
+            operator: "Exists"
+            effect: "NoSchedule"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: postgres-operator # Namespace padrão para o PGO
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
