@@ -31,6 +31,8 @@ trap 'rm -f "$TMP_SECRET_FILE"' EXIT
 log "Gerando senhas seguras e aleatórias..."
 # Para o Keycloak Admin
 KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -base64 32)
+# Para o Banco de Dados do Keycloak
+KEYCLOAK_DB_PASSWORD=$(openssl rand -base64 32)
 
 # Para os clients do Identity
 IDENTITY_CLIENT_SECRET=$(openssl rand -base64 32)
@@ -55,8 +57,12 @@ metadata:
   namespace: $NAMESPACE
 type: Opaque
 data:
-  # Credencial para o Admin do Keycloak
-  password: $(echo -n "$KEYCLOAK_ADMIN_PASSWORD" | base64)
+  # Credencial para o Admin do Keycloak (renomeado para clareza)
+  keycloak-admin-password: $(echo -n "$KEYCLOAK_ADMIN_PASSWORD" | base64)
+
+  # Credenciais para o Banco de Dados do Keycloak (exigido pelo Operator)
+  keycloak-db-user: $(echo -n "keycloak" | base64)
+  keycloak-db-password: $(echo -n "$KEYCLOAK_DB_PASSWORD" | base64)
 
   # Secrets para os clients do Camunda Identity
   client-secret: $(echo -n "$IDENTITY_CLIENT_SECRET" | base64)
