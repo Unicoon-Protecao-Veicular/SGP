@@ -1,0 +1,26 @@
+# Path: production/argocd/apps/dependencies/7-keycloak.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak
+  namespace: argocd
+  annotations:
+    # Wave 7: Instala o Keycloak DEPOIS que o cluster Postgres está pronto.
+    argocd.argoproj.io/sync-wave: "7"
+spec:
+  project: camunda-platform
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: keycloak
+    targetRevision: 20.2.2 # Fixar a versão do chart
+    helm:
+      # Aponta para o arquivo de values customizado no seu repositório Git
+      valueFiles:
+        - ../../charts/keycloak/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: camunda # Instala o Keycloak no namespace principal
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

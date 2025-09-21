@@ -1,0 +1,46 @@
+# Path: production/charts/keycloak/values.yaml
+# Configurações para o chart do Keycloak (Bitnami)
+# Otimizado para se conectar a um banco de dados PostgreSQL externo gerenciado pelo PGO.
+
+# Desabilita a instalação do PostgreSQL que vem com o chart do Keycloak.
+postgresql:
+  enabled: false
+
+# Configuração para se conectar ao banco de dados externo.
+externalDatabase:
+  # O nome do serviço criado pelo PGO segue o padrão: {clusterName}-pgbouncer.{namespace}
+  host: camunda-pg-cluster-pgbouncer.camunda.svc.cluster.local
+  port: 5432
+  user: keycloak
+  database: keycloak
+  # Usa o secret consolidado que criamos anteriormente para obter a senha do banco de dados.
+  existingSecret: camunda-credentials
+  existingSecretPasswordKey: keycloak-db-password
+
+auth:
+  # Usa o secret consolidado para definir a senha do usuário 'admin' do Keycloak.
+  existingSecret: camunda-credentials
+  adminPasswordSecretKey: keycloak-admin-password
+
+# Otimizações para ambiente de nó único.
+replicaCount: 1
+podAntiAffinityPreset: soft # Permite que o pod seja agendado no mesmo nó.
+
+# Permite que o pod do Keycloak rode no nó de controle (master).
+tolerations:
+- key: "node-role.kubernetes.io/control-plane"
+  operator: "Exists"
+  effect: "NoSchedule"
+- key: "node-role.kubernetes.io/master"
+  operator: "Exists"
+  effect: "NoSchedule"
+
+# Configuração do Ingress para expor o Keycloak no seu domínio.
+ingress:
+  enabled: true
+  hostname: auth.consultorunicoon.com.br # Exemplo de subdomínio para o Keycloak
+  annotations:
+    # Assumindo que você usa ingress-nginx e cert-manager. Ajuste se necessário.
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls: true
