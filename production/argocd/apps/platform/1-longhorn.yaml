@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: "https://charts.longhorn.io"
     chart: longhorn
-    targetRevision: "1.6.2" # É uma boa prática fixar a versão do chart.
+    targetRevision: "1.9.1" # É uma boa prática fixar a versão do chart.
     helm:
       valuesObject:
         persistence:
