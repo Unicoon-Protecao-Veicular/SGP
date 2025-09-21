@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
     path: production/argocd/apps
-    targetRevision: HEAD
+    targetRevision: feat/new-architecture
     directory:
       recurse: true
   destination:
