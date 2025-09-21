@@ -12,7 +12,7 @@ spec:
   source:
     repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git # Substitua pelo seu repo
     # Aponta para o arquivo de configuração (Custom Resource) do cluster
-    path: production/charts/elasticsearch
+    path: production/helm-values/elasticsearch
     targetRevision: feat/new-architecture
   destination:
     server: https://kubernetes.default.svc
