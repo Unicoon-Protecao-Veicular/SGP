@@ -1,0 +1,57 @@
+# Path: production/charts/postgres/cluster-cr.yaml
+# Este é um Recurso Customizado (CR) que o operador PGO irá usar para criar o cluster.
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: camunda-pg-cluster
+  namespace: camunda
+spec:
+  postgresVersion: 15
+  instances:
+    - name: instance1
+      replicas: 1 # Apenas uma instância para ambiente de nó único
+      dataVolumeClaimSpec:
+        accessModes:
+        - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: longhorn
+      # Permite que o pod rode no nó de controle (master)
+      tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+  backups:
+    pgbackrest:
+      repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              accessModes:
+              - "ReadWriteOnce"
+              resources:
+                requests:
+                  storage: 20Gi
+              storageClassName: longhorn
+  users:
+    # Cria o usuário para o Keycloak. A senha será gerenciada pelo PGO.
+    # O PGO criará um Secret chamado 'camunda-pg-cluster-keycloak-user' com a senha.
+    - name: keycloak
+      databases:
+      - keycloak
+      options: "SUPERUSER" # Necessário para o Keycloak gerenciar o schema
+  # Expõe o serviço primário do cluster
+  proxy:
+    pgBouncer:
+      replicas: 1
+      tolerations:
+      - key: "node-role.kubernetes.io/control-plane"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"

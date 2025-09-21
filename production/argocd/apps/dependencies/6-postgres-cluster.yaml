@@ -1,0 +1,23 @@
+# Path: production/argocd/apps/dependencies/6-postgres-cluster.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: postgres-cluster
+  namespace: argocd
+  annotations:
+    # Wave 6: Cria o cluster DEPOIS que o operador PGO está pronto.
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  project: camunda-platform
+  source:
+    repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git # Substitua pelo seu repo
+    # Aponta para o arquivo de configuração (Custom Resource) do cluster
+    path: production/helm-values/postgres
+    targetRevision: feat/new-architecture
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: camunda # O cluster será criado no mesmo namespace do Camunda e Keycloak
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
