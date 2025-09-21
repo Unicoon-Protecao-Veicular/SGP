@@ -12,11 +12,14 @@ spec:
   source:
     repoURL: https://charts.bitnami.com/bitnami
     chart: keycloak
-    targetRevision: 20.2.2 # Fixar a versão do chart
+    # CORREÇÃO: Usando uma versão de chart válida e recente.
+    # O chart 19.2.5 instala a aplicação Keycloak 24.0.4.
+    targetRevision: 19.2.5
     helm:
       # Aponta para o arquivo de values customizado no seu repositório Git
+      # ATENÇÃO: Verifique se este caminho está correto em relação à raiz do seu repositório.
       valueFiles:
-        - ../../charts/keycloak/values.yaml
+        - https://raw.githubusercontent.com/Unicoon-Protecao-Veicular/SGP/main/production/helm-values/keycloak/values.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: camunda # Instala o Keycloak no namespace principal
@@ -24,3 +27,4 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
