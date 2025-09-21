@@ -15,18 +15,21 @@ spec:
     targetRevision: "1.9.1" # É uma boa prática fixar a versão do chart.
     helm:
       valuesObject:
-        persistence:
-          defaultClassReplicaCount: 1 # Otimizado para nó único
-        defaultSettings:
-          defaultDataPath: "/var/lib/longhorn/"
-        # Permite que os pods do Longhorn rodem no nó de controle (master)
-        tolerations:
-          - key: "node-role.kubernetes.io/control-plane"
-            operator: "Exists"
-            effect: "NoSchedule"
-          - key: "node-role.kubernetes.io/master"
-            operator: "Exists"
-            effect: "NoSchedule"
+        preUpgradeChecker:
+          jobEnabled: false
+        manager:
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+            - key: "node-role.kubernetes.io/master"
+              operator: "Exists"
+              effect: "NoSchedule"
+        settings:
+          createDefaultDiskLabeledNodes: true
+        ui:
+          service:
+            type: ClusterIP
   destination:
     server: https://kubernetes.default.svc
     namespace: longhorn-system
