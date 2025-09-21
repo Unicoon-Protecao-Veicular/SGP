@@ -1,100 +1,81 @@
 #!/bin/bash
+# Script para gerar um SealedSecret consolidado para a plataforma Camunda.
+# Gera senhas aleatórias para todos os componentes necessários.
 
-# Este script automatiza a criação de um SealedSecret para as credenciais do PostgreSQL.
+set -euo pipefail
 
-set -e
+# --- Validações ---
+log() { echo "==> $1"; }
 
-# --- Verificação de Pré-requisitos ---
-echo "Verificando se as ferramentas necessárias (kubectl, kubeseal) estão instaladas..."
-
-if ! command -v kubectl &> /dev/null; then
-    echo "ERRO: kubectl não encontrado. Por favor, instale-o e configure seu acesso ao cluster." >&2
-    exit 1
+if ! command -v kubeseal > /dev/null; then
+  echo "ERRO: kubeseal não encontrado. Instale e configure-o para seu cluster." >&2
+  exit 1
 fi
-
-if ! command -v kubeseal &> /dev/null; then
-    echo "ERRO: kubeseal não encontrado. Por favor, instale a CLI do Sealed Secrets." >&2
-    exit 1
+if ! command -v openssl > /dev/null; then
+  echo "ERRO: openssl não encontrado." >&2
+  exit 1
 fi
+log "Dependências verificadas."
 
-echo "Ferramentas encontradas."
+# --- Configurações ---
+SECRET_NAME="camunda-credentials"
+NAMESPACE="camunda"
+SECRETS_DIR="$(cd "$(dirname "$0")/../k8s/secrets" && pwd)"
+OUTPUT_FILE="$SECRETS_DIR/sealed-camunda-credentials.yaml"
+TMP_SECRET_FILE=$(mktemp)
 
-# --- Coleta de Senhas ---
-echo ""
+# Garante a limpeza do arquivo temporário ao sair
+trap 'rm -f "$TMP_SECRET_FILE"' EXIT
 
-read -s -p "Digite a senha para o usuário do Keycloak (bn_keycloak): " KEYCLOAK_PASSWORD
-echo
-read -s -p "Confirme a senha do usuário do Keycloak: " KEYCLOAK_PASSWORD_CONFIRM
-echo
+# --- Geração de Senhas Aleatórias ---
+log "Gerando senhas seguras e aleatórias..."
+# Para o Keycloak Admin
+KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -base64 32)
 
-if [ "$KEYCLOAK_PASSWORD" != "$KEYCLOAK_PASSWORD_CONFIRM" ]; then
-    echo "ERRO: As senhas do Keycloak não coincidem." >&2
-    exit 1
-fi
+# Para os clients do Identity
+IDENTITY_CLIENT_SECRET=$(openssl rand -base64 32)
+OPERATE_CLIENT_SECRET=$(openssl rand -base64 32)
+TASKLIST_CLIENT_SECRET=$(openssl rand -base64 32)
+OPTIMIZE_CLIENT_SECRET=$(openssl rand -base64 32)
+CONSOLE_CLIENT_SECRET=$(openssl rand -base64 32)
+CONNECTORS_CLIENT_SECRET=$(openssl rand -base64 32)
+ZEEBE_CLIENT_SECRET=$(openssl rand -base64 32)
 
-read -s -p "Digite a senha para o superusuário do PostgreSQL (postgres): " POSTGRES_PASSWORD
-echo
-read -s -p "Confirme a senha do superusuário do PostgreSQL: " POSTGRES_PASSWORD_CONFIRM
-echo
 
-if [ "$POSTGRES_PASSWORD" != "$POSTGRES_PASSWORD_CONFIRM" ]; then
-    echo "ERRO: As senhas do PostgreSQL não coincidem." >&2
-    exit 1
-fi
+log "Senhas geradas com sucesso."
 
-# --- Codificação e Geração do Secret ---
-
-KEYCLOAK_PASSWORD_B64=$(echo -n "$KEYCLOAK_PASSWORD" | base64)
-POSTGRES_PASSWORD_B64=$(echo -n "$POSTGRES_PASSWORD" | base64)
-
-# Define o diretório de saída para estar no mesmo nível do diretório do script
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
-SECRETS_DIR="$SCRIPT_DIR/../k8s/secrets"
-
-TEMP_SECRET_FILE=$(mktemp)
-SEALED_SECRET_FILE="$SECRETS_DIR/sealed-postgresql-credentials.yaml"
-
-# Garante que o diretório de segredos exista
-mkdir -p "$SECRETS_DIR"
-
-cat > "$TEMP_SECRET_FILE" << EOF
+# --- Criação do Manifesto do Secret (em Base64) ---
+# O 'data' de um Secret precisa ter valores encodados em base64.
+# O `echo -n` é crucial para não incluir um newline no valor.
+cat > "$TMP_SECRET_FILE" <<EOF
 apiVersion: v1
 kind: Secret
 metadata:
-  name: postgresql-credentials
-  namespace: camunda
+  name: $SECRET_NAME
+  namespace: $NAMESPACE
 type: Opaque
 data:
-  password: $KEYCLOAK_PASSWORD_B64
-  postgres-password: $POSTGRES_PASSWORD_B64
+  # Credencial para o Admin do Keycloak
+  password: $(echo -n "$KEYCLOAK_ADMIN_PASSWORD" | base64)
+
+  # Secrets para os clients do Camunda Identity
+  client-secret: $(echo -n "$IDENTITY_CLIENT_SECRET" | base64)
+  operate-secret: $(echo -n "$OPERATE_CLIENT_SECRET" | base64)
+  tasklist-secret: $(echo -n "$TASKLIST_CLIENT_SECRET" | base64)
+  optimize-secret: $(echo -n "$OPTIMIZE_CLIENT_SECRET" | base64)
+  console-secret: $(echo -n "$CONSOLE_CLIENT_SECRET" | base64)
+  connectors-secret: $(echo -n "$CONNECTORS_CLIENT_SECRET" | base64)
+  zeebe-secret: $(echo -n "$ZEEBE_CLIENT_SECRET" | base64)
 EOF
 
-# --- Criptografia com Kubeseal ---
+log "Manifesto do Secret temporário criado em $TMP_SECRET_FILE."
 
+# --- Selar o Secret com kubeseal ---
+log "Selando o secret com kubeseal..."
+# O controller name deve corresponder ao nome do serviço do sealed-secrets no cluster
+kubeseal --controller-name sealed-secrets --format=yaml < "$TMP_SECRET_FILE" > "$OUTPUT_FILE"
+
+log "Sucesso! SealedSecret consolidado gerado em:"
+log "$OUTPUT_FILE"
 echo ""
-echo "Criando o secret temporário e tentando criptografá-lo com kubeseal..."
-echo "Isso pode levar um momento, pois precisa contatar o controller no cluster."
-
-if kubeseal --format=yaml < "$TEMP_SECRET_FILE" > "$SEALED_SECRET_FILE"; then
-    echo ""
-    echo "SUCESSO!" 
-    echo "O arquivo criptografado foi salvo em: $SEALED_SECRET_FILE"
-else
-    echo ""
-    echo "ERRO: A criptografia com kubeseal falhou." >&2
-    echo "Verifique se o controller do Sealed Secrets está rodando no seu cluster e se seu kubectl está configurado corretamente." >&2
-    rm -f "$TEMP_SECRET_FILE"
-    exit 1
-fi
-
-# --- Limpeza ---
-
-rm -f "$TEMP_SECRET_FILE"
-echo "O arquivo de secret temporário foi removido com segurança."
-
-# --- Próximos Passos ---
-
-echo ""
-echo "Próximos passos:"
-echo "1. Faça o commit do arquivo '$SEALED_SECRET_FILE'."
-echo "2. Garanta que o ArgoCD aplique as alterações ao cluster."
+echo "Próximo passo: Faça o commit e push de '$OUTPUT_FILE' para seu repositório Git."
