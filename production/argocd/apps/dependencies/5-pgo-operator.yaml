@@ -10,7 +10,7 @@ metadata:
 spec:
   project: camunda-platform
   source:
-    repoURL: https://charts.crunchydata.com/
+    repoURL: oci://registry.developers.crunchydata.com/crunchydata
     chart: pgo
     targetRevision: 5.6.0 # Fixar a versão do chart
     helm:
