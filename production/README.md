@@ -1,126 +1,129 @@
 # Ambiente de Produção SGP
 
-Este diretório contém toda a configuração e scripts para implantar o ambiente de produção do SGP (Sistema de Gestão de Processos) em um cluster Kubernetes.
+Este diretório contém toda a configuração para implantar o ambiente de produção do SGP (Sistema de Gestão de Processos) em um cluster Kubernetes, utilizando uma abordagem GitOps com ArgoCD.
+
+## Visão Geral da Arquitetura
+
+A implantação é gerenciada pelo **ArgoCD**, que utiliza o repositório Git como fonte da verdade. Isso significa que todas as configurações do cluster, incluindo aplicações e infraestrutura, são declaradas como código. As alterações no cluster são feitas através de commits no Git, garantindo um processo rastreável e automatizado.
+
+Para gerenciar dependências entre os serviços (como garantir que o `cert-manager` esteja pronto antes de criar `Ingresses` com TLS), usamos as **Sync Waves** do ArgoCD, que orquestram a ordem de implantação.
 
 ## Pré-requisitos
 
+Antes de começar, garanta que os seguintes requisitos sejam atendidos.
+
 ### Servidor de Produção
-- Servidor Linux (Ubuntu, etc.) com acesso root.
+- Um servidor Linux (ex: Ubuntu 20.04+) com acesso root/sudo.
+- `git` instalado.
 - Docker instalado.
 
-### Máquina Local (do Desenvolvedor)
-- **`kubectl`**: Instalado e configurado para acessar seu cluster Kubernetes.
-- **`kubeseal`**: A ferramenta de linha de comando para criptografar os segredos. A instalação varia por sistema operacional.
-  - **macOS (usando Homebrew):** `brew install kubeseal`
-  - **Linux/Windows:** Baixe o binário da [página de releases do Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets/releases) e adicione ao seu PATH.
+### Máquina Local (do Engenheiro de Implantação)
+- `git` instalado para clonar o repositório.
+- `kubectl` para interagir com o cluster.
+- `kubeseal` para criptografar segredos.
+- `envsubst` (geralmente parte do pacote `gettext`) para substituir variáveis em templates.
 
-## Fluxo de Implantação (Bootstrap)
+## Fluxo de Implantação do Zero
 
-Para implantar o ambiente do zero em um novo servidor, siga os passos:
+O processo de implantação é dividido em três fases principais.
 
-1.  **Preparar o Servidor**: Clone este repositório em um servidor Linux com Docker instalado.
+---
 
-2.  **Executar o Setup Principal**: O script principal orquestra a instalação de todas as dependências de infraestrutura.
+### Fase 1: Setup do Servidor de Produção
+
+**Objetivo:** Preparar o servidor com a infraestrutura base do Kubernetes.
+**Onde executar:** No terminal do seu **servidor de produção**.
+
+1.  **Execute o boostrap do camunda deploy**
+    ```bash
+        scp bootstrap-camunda-deploy.sh root@<IP SERVIDOR>:~
+        bash bootstrap-camunda-deploy.sh --repo <SSH repositório GIT> --branch <BRANCH EM USO>
+    ```
+
+2.  **Execute o Script de Setup da Infraestrutura**
+
+    Este é o script principal que instala todos os componentes de base no servidor.
+
     ```bash
     bash production/scripts/setup-production.sh
     ```
-    Este script irá instalar: K3s, Helm, ArgoCD e o controller do Sealed Secrets.
 
-3.  **Gerar o Segredo do Banco de Dados**: As senhas do banco de dados não são armazenadas no Git. Você precisa gerá-las e criptografá-las usando o script que preparamos.
+    O que este script faz:
+    - Instala o **K3s** (uma distribuição leve de Kubernetes).
+    - Instala o **Helm** (gerenciador de pacotes para Kubernetes).
+    - Instala o **ArgoCD** (ferramenta de GitOps para deployment contínuo).
+    - Instala o controller do **Sealed Secrets** (para gerenciar segredos de forma segura no Git).
+    - Configura o ArgoCD para ter acesso a este repositório Git via SSH.
+
+Ao final desta fase, você terá um cluster Kubernetes funcional com o ArgoCD pronto para implantar as aplicações.
+
+---
+
+### Fase 2: Configuração do Ambiente Local e Geração de Segredos
+
+**Objetivo:** Configurar sua máquina local para se comunicar com o cluster e gerar as configurações específicas do ambiente (como segredos e e-mail para certificados).
+**Onde executar:** No terminal da sua **máquina local**.
+
+1.  **Execute o Script de Configuração do Ambiente Local**
+
+    Este script interativo automatiza toda a configuração da sua máquina.
+
     ```bash
     # Dê permissão de execução primeiro
-    chmod +x production/scripts/create-sealed-secret.sh
+    chmod +x production/scripts/configure-local-env.sh
 
-    # Execute o script e siga as instruções
-    ./production/scripts/create-sealed-secret.sh
+    # Execute o script
+    bash production/scripts/configure-local-env.sh
     ```
-    - Para instruções detalhadas sobre este passo, consulte o [Guia de Criação de Segredos](./k8s/secrets/README.md).
-    - Após a execução, faça o commit do arquivo `sealed-postgresql-credentials.yaml` que será gerado.
 
-4.  **Implantar as Aplicações via ArgoCD**: O último script instrui o ArgoCD a instalar as aplicações definidas no repositório (Camunda e os Segredos).
+    O que este script faz:
+    - **Solicita o IP do servidor** e o **e-mail para o Let's Encrypt**.
+    - **Configura seu `kubectl`** para apontar para o novo cluster no servidor.
+    - **Gera o `cluster-issuers.yaml`**, que instrui o `cert-manager` a emitir certificados SSL/TLS.
+    - **Executa `create-all-secrets.sh`** para gerar senhas aleatórias e seguras para Camunda e Grafana, criptografando-as com o `kubeseal`.
+    - **Cria um commit no Git** com todos os arquivos de configuração gerados.
+
+2.  **Envie as Configurações para o Repositório**
+
+    O script anterior preparou o commit. Agora, você só precisa enviá-lo para o repositório. Este é o gatilho que inicia a implantação no ArgoCD.
+
+    ```bash
+    git push
+    ```
+
+---
+
+### Fase 3: Bootstrap das Aplicações no Cluster
+
+**Objetivo:** Instruir o ArgoCD a sincronizar e implantar todas as aplicações definidas no repositório.
+**Onde executar:** no servidor.
+
+1.  **Execute o Script de Bootstrap das Aplicações**
+
+    Este comando final aplica o "App of Apps" no cluster, que é o ponto de entrada para o ArgoCD começar a trabalhar.
+
     ```bash
     bash production/scripts/bootstrap-apps.sh
     ```
 
-Após estes passos, o ArgoCD irá sincronizar o estado do repositório com o cluster, e o ambiente completo do Camunda estará no ar.
+    A partir deste momento, o ArgoCD assume o controle e implantará todas as aplicações na ordem correta, respeitando as `Sync Waves`.
 
-### REadme antigo #####
+2.  **Aplique os Ingresses da Aplicação (Passo Manual)**
 
-# Ambiente de Produção
+    Após o bootstrap, os `Ingresses` que expõem os serviços do Camunda e do próprio ArgoCD precisam ser aplicados manualmente.
 
-Este diretório contém os artefatos de implantação para produção.
+    ```bash
+    kubectl apply -f production/k8s/ingress/
+    ```
 
-## Estrutura
+    > **Nota:** Atualmente, este é um passo manual. No futuro, ele pode ser automatizado criando uma nova `Application` do ArgoCD para gerenciar os Ingresses.
 
-- `argocd`: Aplicações do Argo CD (project, app-of-apps, apps)
-- `helm-values`: Valores customizados para charts Helm
-- `k8s/`: Manifests do Kubernetes (Deployments, Services, Ingress, ConfigMaps, Secrets templates)
-- `scripts`: Scripts de bootstrap (k3s, helm, argocd)
+3.  **Acompanhe o Deploy (Opcional)**
 
-## Como usar
+    Você pode observar o progresso da implantação na interface de usuário do ArgoCD. Para obter a senha inicial, execute:
+    ```bash
+    kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo
+    ```
+    O Ingress para o ArgoCD será criado automaticamente.
 
-1) Provisionar o cluster (k3s) no VPS Ubuntu
-
-   - Instale as ferramentas: `bash production/scripts/setup-production.sh`
-
-   Observação (multiusuários): o script de k3s configura o `KUBECONFIG` de forma global via `/etc/profile.d/k3s-kubeconfig.sh`,
-   apontando para `/etc/rancher/k3s/k3s.yaml` (permissão 0644). Assim, qualquer usuário poderá usar `kubectl` sem depender de `~/.kube/config`.
-   Abra uma nova sessão de shell após a instalação ou execute `source /etc/profile.d/k3s-kubeconfig.sh` para ativar na sessão atual.
-
-2) Aplicar namespaces e Argo CD App-of-Apps
-
-   - `bash production/scripts/bootstrap-apps.sh`
-
-   O Argo CD irá sincronizar automaticamente:
-   - `longhorn` (provisionador de volumes)
-   - `ingress-nginx` (LoadBalancer)
-   - `kube-prometheus-stack` (Prometheus, Alertmanager, Grafana)
-   - `camunda-platform` (Zeebe, Operate, Tasklist, Optimize, Identity, Keycloak, Elasticsearch)
-
-3) Ajustar DNS/Ingress
-
-   - Aplique: `kubectl apply -f production/k8s/ingress/`.
-
-## SSL/TLS com Let's Encrypt
-
-- Instalar cert-manager:
-  - `bash production/scripts/install-cert-manager.sh`
-
-- Configurar ClusterIssuers (staging e produção):
-  - `LE_EMAIL=seu-email@dominio.com bash production/scripts/configure-lets-encrypt.sh`
-
-- Habilitar TLS nos Ingresses:
-  - Os manifests em `production/k8s/ingress/` já incluem a annotation `cert-manager.io/cluster-issuer: letsencrypt-prod` e blocos `tls` com secrets (`argocd-tls`, `camunda-tls`).
-  - Ajuste os hosts conforme seu domínio e aplique: `kubectl apply -f production/k8s/ingress/`.
-
-- Renovação e status:
-  - Renovação é automática (cert-manager renova antes de expirar).
-  - Ver status e forçar renovação manual, se necessário: `bash production/scripts/renew-certificates.sh [--force]`
-
-
-4) Acesso inicial
-
-   - Argo CD: `argocd.consultorunicoon.com.br` (obter o password `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo`).
-   - Grafana: service `monitoring-grafana`. Defina a senha com um Secret antes (abaixo).
-   - Camunda UIs (via paths): `consultorunicoon.com.br/operate`, `consultorunicoon.com.br/tasklist`, `consultorunicoon.com.br/optimize`, `consultorunicoon.com.br/identity`, `consultorunicoon.com.br/keycloak`.
-
-Observações importantes:
-
-- Defina segredos reais via `Secret` (não commitar valores). Para Grafana/Keycloak/Identity, configure usuários/senhas/domínios conforme sua política.
-
-## Observações
-
-- Este repositório não deve conter segredos reais.
-- Recomenda-se usar pipelines (CI/CD) para aplicar as mudanças.
-
-## Senha do admin do Grafana (segura)
-
-O chart está configurado para usar um Secret existente (`grafana-admin`) em `monitoring`:
-
-1) Crie o Secret com usuário/senha (fora do Git):
-
-   kubectl -n monitoring create secret generic grafana-admin \
-     --from-literal=admin-user=admin \
-     --from-literal=admin-password='<SENHA_FORTE>'
-
-2) Sincronize/instale o app de monitoring pelo Argo CD. O Grafana usará esse Secret.
+Após a conclusão, todo o ambiente SGP estará no ar, configurado com TLS e pronto para uso.
