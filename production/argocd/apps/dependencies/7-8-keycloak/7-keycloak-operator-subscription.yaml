@@ -8,9 +8,11 @@ kind: Subscription
 metadata:
   name: keycloak-operator
   namespace: operators # Instala o operator no namespace 'operators'
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
 spec:
   channel: fast
   name: keycloak-operator
   source: community-operators
   sourceNamespace: olm
-  installPlanApproval: Manual # Impede atualizações automáticas que possam quebrar a aplicação.
+  installPlanApproval: Automatic # Impede atualizações automáticas que possam quebrar a aplicação.
