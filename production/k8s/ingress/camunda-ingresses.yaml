@@ -43,10 +43,4 @@ spec:
                 name: camunda-platform-identity
                 port:
                   number: 80
-          - path: /keycloak
-            pathType: Prefix
-            backend:
-              service:
-                name: camunda-platform-keycloak
-                port:
-                  number: 80
+          
