@@ -11,7 +11,7 @@ metadata:
   namespace: argocd
   annotations:
     # Wave 6: Instala o Operator DEPOIS dos bancos de dados e ANTES da instância do Keycloak.
-    argocd.argoproj.io/sync-wave: "6"
+    argocd.argoproj.io/sync-wave: "7"
 spec:
   project: camunda-platform
   source:
@@ -45,7 +45,7 @@ metadata:
   namespace: argocd
   annotations:
     # Wave 7: Instala o Keycloak DEPOIS que o Operator está pronto.
-    argocd.argoproj.io/sync-wave: "7"
+    argocd.argoproj.io/sync-wave: "8"
 spec:
   project: camunda-platform
   source:

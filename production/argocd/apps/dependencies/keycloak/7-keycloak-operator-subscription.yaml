@@ -1,0 +1,16 @@
+
+# production/k8s/keycloak-operator-subscription.yaml
+# Instala o Keycloak Operator a partir do OperatorHub da comunidade.
+# O Operator será instalado no namespace 'operators', que é uma prática recomendada.
+# Se o OLM não estiver instalado no cluster, este passo falhará.
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: keycloak-operator
+  namespace: operators # Instala o operator no namespace 'operators'
+spec:
+  channel: fast
+  name: keycloak-operator
+  source: community-operators
+  sourceNamespace: olm
+  installPlanApproval: Manual # Impede atualizações automáticas que possam quebrar a aplicação.
