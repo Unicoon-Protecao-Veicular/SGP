@@ -13,9 +13,8 @@ metadata:
 spec:
   project: camunda-platform
   source:
-    repoURL: https://charts.keycloak.org/
+    repoURL: https://kbumsik.io/keycloak-kubernetes/
     chart: keycloak-operator
-    targetRevision: "25.0.1" # É uma boa prática fixar a versão do chart.
     helm:
       valuesObject:
         tolerations:
