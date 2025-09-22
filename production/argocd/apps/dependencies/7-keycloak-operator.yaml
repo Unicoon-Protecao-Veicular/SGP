@@ -13,9 +13,8 @@ metadata:
 spec:
   project: camunda-platform
   source:
-    repoURL: https://kbumsik.io/keycloak-kubernetes/
+    repoURL: https://epam.github.io/edp-helm-charts/stable
     chart: keycloak-operator
-    targetRevision: 25.0.1
     helm:
       valuesObject:
         tolerations:
