@@ -15,6 +15,7 @@ spec:
   source:
     repoURL: https://kbumsik.io/keycloak-kubernetes/
     chart: keycloak-operator
+    targetRevision: 25.0.1
     helm:
       valuesObject:
         tolerations:
