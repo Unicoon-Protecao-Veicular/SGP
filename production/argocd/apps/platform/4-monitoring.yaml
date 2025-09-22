@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  annotations:
+    # Wave 5: Monitoramento pode ser instalado após a infraestrutura principal.
+    argocd.argoproj.io/sync-wave: "5"
+  namespace: argocd
+spec:
+  project: camunda-platform
+  destination:
+    namespace: monitoring
+    server: https://kubernetes.default.svc
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 62.7.0
+    helm:
+      releaseName: monitoring
+      valuesObject:
+        grafana:
+          admin:
+            existingSecret: grafana-admin
+            userKey: admin-user
+            passwordKey: admin-password
+          service:
+            type: ClusterIP
+        prometheus:
+          service:
+            type: ClusterIP
+        alertmanager:
+          service:
+            type: ClusterIP
+        prometheusOperator:
+          admissionWebhooks:
+            enabled: true
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
