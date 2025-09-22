@@ -22,14 +22,25 @@ die() { echo -e "\033[1;31m[ERRO] $1\033[0m" >&2; exit 1; }
 check_deps() {
     log "Verificando dependências..."
     local missing=0
+<<<<<<< Updated upstream
     for cmd in git kubectl kubeseal envsubst; do
+=======
+    for cmd in git kubectl kubeseal envsubst scp; do
+>>>>>>> Stashed changes
         if ! command -v "$cmd" &> /dev/null; then
             warn "Comando '$cmd' não encontrado. Por favor, instale-o."
             missing=1
         fi
 done
     [[ "$missing" -eq 0 ]] && info "Todas as dependências foram encontradas."
+<<<<<<< Updated upstream
     [[ "$missing" -eq 1 ]] && die "Dependências faltando. Abortando."
+=======
+    if [[ "$missing" -eq 1 ]]; then
+        die "Dependências faltando. Abortando."
+    fi
+    return 0
+>>>>>>> Stashed changes
 }
 
 # --- Início do Script ---
@@ -48,6 +59,17 @@ read -p "  -> Digite o endereço IP do servidor de produção: " SERVER_IP
 
 # --- Configuração do Kubeconfig ---
 log "Configurando o acesso ao cluster com kubectl"
+<<<<<<< Updated upstream
+=======
+
+info "Baixando o arquivo de configuração 'k3s.yaml' do servidor $SERVER_IP..."
+if scp "root@$SERVER_IP:/etc/rancher/k3s/k3s.yaml" "$ROOT_DIR/k3s.yaml"; then
+    info "Download do 'k3s.yaml' concluído com sucesso."
+else
+    die "Falha ao baixar 'k3s.yaml' do servidor. Verifique a conectividade, o IP e se o usuário 'root' pode usar scp."
+fi
+
+>>>>>>> Stashed changes
 K3S_TEMPLATE_PATH="$ROOT_DIR/k3s.yaml"
 KUBECONFIG_PATH="$HOME/.kube/config"
 
@@ -65,6 +87,12 @@ fi
 
 echo "$K3S_CONFIG_CONTENT" > "$KUBECONFIG_PATH"
 info "Seu '$KUBECONFIG_PATH' foi configurado para acessar o servidor $SERVER_IP."
+<<<<<<< Updated upstream
+=======
+
+info "Removendo o arquivo template k3s.yaml..."
+rm "$K3S_TEMPLATE_PATH"
+>>>>>>> Stashed changes
 info "Testando a conexão com o cluster..."
 if kubectl get nodes &> /dev/null; then
     info "Conexão com o cluster bem-sucedida!"
