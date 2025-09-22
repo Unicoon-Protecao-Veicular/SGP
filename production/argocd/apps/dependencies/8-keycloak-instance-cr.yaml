@@ -1,0 +1,53 @@
+# Path: production/k8s/keycloak-instance-cr.yaml
+# Define a instância do Keycloak a ser criada pelo Operator.
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: camunda
+  annotations:
+    # Wave 8: Cria a instância do Keycloak DEPOIS que o operator está pronto.
+    argocd.argoproj.io/sync-wave: "8"
+spec:
+  instances: 1
+  db:
+    # --- CONFIGURAÇÃO DA CONEXÃO COM O BANCO DE DADOS ---
+    # Certifique-se de que estes valores estão corretos.
+    vendor: postgres
+    # O 'host' deve ser o nome do serviço do seu cluster Postgres (PGO).
+    # O formato padrão é: <cluster-name>-pgbouncer.<namespace>.svc.cluster.local
+    host: camunda-pg-cluster-pgbouncer.camunda.svc.cluster.local
+    port: 5432
+    database: keycloak # O banco de dados para o Keycloak.
+    # O 'usernameSecret' e 'passwordSecret' apontam para o Secret que contém as credenciais do DB.
+    usernameSecret:
+      name: camunda-credentials # Nome do Secret não selado no cluster.
+      key: keycloak-db-user    # Chave dentro do Secret com o nome de usuário do DB.
+    passwordSecret:
+      name: camunda-credentials # Nome do Secret não selado no cluster.
+      key: keycloak-db-password  # Chave dentro do Secret com a senha do DB.
+
+  # --- CONFIGURAÇÃO DE REDE E INGRESS ---
+  hostname:
+    # O hostname público para acessar o Keycloak.
+    hostname: auth.consultorunicoon.com.br
+  ingress:
+    enabled: true
+    className: nginx # Certifique-se que o Ingress Controller Nginx está instalado.
+    annotations:
+      "cert-manager.io/cluster-issuer": "letsencrypt-prod" # Certifique-se que o cert-manager e o ClusterIssuer existem.
+  http:
+    # O cert-manager usará esta configuração para criar e gerenciar o secret TLS para o Ingress.
+    tlsSecret: auth-consultorunicoon-com-br-tls
+
+  # --- CONFIGURAÇÃO PARA AMBIENTE K3S SINGLE-NODE ---
+  unsupported:
+    podTemplate:
+      spec:
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/master"
+            operator: "Exists"
+            effect: "NoSchedule"
