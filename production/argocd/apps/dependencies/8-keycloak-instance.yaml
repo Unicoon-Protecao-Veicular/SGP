@@ -15,7 +15,7 @@ spec:
     repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git # Substitua pelo seu repo
     # ATENÇÃO: O path aponta para o diretório onde o Custom Resource está,
     # que deve ser DIFERENTE do path da sua 'app-of-apps'.
-    path: production/k8s/keycloak
+    path: production/helm-values/keycloak
     targetRevision: feat/new-architecture
   destination:
     server: https://kubernetes.default.svc
