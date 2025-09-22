@@ -1,0 +1,36 @@
+# Path: production/argocd/apps/dependencies/3-eck-operator.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: eck-operator
+  namespace: argocd
+  annotations:
+    # Wave 3: Instala o operador ANTES de tentar criar um cluster.
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: camunda-platform
+  source:
+    repoURL: https://helm.elastic.co
+    chart: eck-operator
+    targetRevision: 2.13.0 # Fixar a versão do chart é uma boa prática
+    helm:
+      values: |
+        # Otimizado para K3s em nó único
+        webhook:
+          # Permite que os pods do operador rodem no nó de controle (master)
+          tolerations:
+            - key: "node-role.kubernetes.io/control-plane"
+              operator: "Exists"
+              effect: "NoSchedule"
+            - key: "node-role.kubernetes.io/master"
+              operator: "Exists"
+              effect: "NoSchedule"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: elastic-system # Namespace padrão para o operador ECK
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

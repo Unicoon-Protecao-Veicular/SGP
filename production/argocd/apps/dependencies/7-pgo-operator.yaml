@@ -1,0 +1,48 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # Mantendo o nome e o namespace originais da sua aplicação.
+  name: pgo-operator
+  namespace: argocd
+  # Mantendo as anotações originais.
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
+spec:
+  # Mantendo o projeto original.
+  project: camunda-platform
+
+  destination:
+    # Mantendo o destino original.
+    namespace: postgres-operator
+    server: https://kubernetes.default.svc
+
+  source:
+    # CORREÇÃO 1: O 'repoURL' aponta para o caminho do repositório OCI,
+    # sem o prefixo 'oci://' e sem o nome do chart no final.
+    repoURL: 'registry.developers.crunchydata.com/crunchydata'
+
+    # CORREÇÃO 2: O nome do chart é especificado separadamente no campo 'chart'.
+    chart: 'pgo'
+
+    # A versão do chart que você deseja implantar.
+    targetRevision: 5.6.0
+
+    helm:
+      # Mantendo seus valores Helm personalizados.
+      values: |
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/master"
+            operator: "Exists"
+            effect: "NoSchedule"
+
+  # Mantendo sua política de sincronização original.
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

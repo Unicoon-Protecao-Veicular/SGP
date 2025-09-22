@@ -1,0 +1,37 @@
+# Path: production/argocd/apps/dependencies/7-keycloak-operator.yaml
+# SUBSTITUI o antigo '7-keycloak-operator-subscription.yaml'
+# Esta abordagem usa o Helm Chart oficial para instalar o operator,
+# o que é mais explícito e remove a dependência do OLM.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak-operator
+  namespace: argocd
+  annotations:
+    # Wave 7: Instala o operator do Keycloak DEPOIS que o cluster de Postgres está pronto.
+    argocd.argoproj.io/sync-wave: "9"
+spec:
+  project: camunda-platform
+  source:
+    repoURL: https://charts.adfinis.com
+    chart: keycloak-operator
+    targetRevision: 1.6.2
+    helm:
+      valuesObject:
+        tolerations:
+          - key: "node-role.kubernetes.io/control-plane"
+            operator: "Exists"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/master"
+            operator: "Exists"
+            effect: "NoSchedule"
+  destination:
+    server: https://kubernetes.default.svc
+    # O operator será instalado no namespace 'camunda' para gerenciar a instância no mesmo local.
+    namespace: camunda
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
