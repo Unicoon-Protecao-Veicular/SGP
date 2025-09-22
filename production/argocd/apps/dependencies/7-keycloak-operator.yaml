@@ -13,8 +13,9 @@ metadata:
 spec:
   project: camunda-platform
   source:
-    repoURL: https://epam.github.io/edp-helm-charts/stable
+    repoURL: https://charts.adfinis.com
     chart: keycloak-operator
+    targetRevision: 1.6.2
     helm:
       valuesObject:
         tolerations:
