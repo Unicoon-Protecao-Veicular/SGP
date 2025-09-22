@@ -1,0 +1,23 @@
+# Path: production/argocd/apps/platform/2a-cert-manager-issuers.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-issuers
+  namespace: argocd
+  annotations:
+    # Wave 2a: Aplica a configuração DEPOIS que o controller do cert-manager está pronto.
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: camunda-platform
+  source:
+    repoURL: git@github.com:Unicoon-Protecao-Veicular/SGP.git
+    path: production/k8s/cert-manager
+    targetRevision: feat/new-architecture
+  destination:
+    server: 'https://kubernetes.default.svc'
+    # ClusterIssuers são recursos a nível de cluster, não precisam de namespace.
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

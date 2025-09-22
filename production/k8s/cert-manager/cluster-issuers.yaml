@@ -1,0 +1,20 @@
+# Path: production/k8s/cert-manager/production-issuer.yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  # Nome do emissor de produção
+  name: letsencrypt-production
+spec:
+  acme:
+    # IMPORTANTE: Troque pelo seu e-mail para receber notificações do Let's Encrypt
+    email: admin@consultorunicoon.com.br
+    # Servidor de Produção do Let's Encrypt
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      # Secret onde a chave privada do emissor será armazenada
+      name: letsencrypt-production-key
+    solvers:
+      - http01:
+          ingress:
+            class: nginx
+
