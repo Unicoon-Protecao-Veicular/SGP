@@ -22,7 +22,7 @@ spec:
     # O 'usernameSecret' e 'passwordSecret' apontam para o Secret que contém as credenciais do DB.
     username: keycloak
     passwordSecret:
-      name: camunda-pg-cluster-keycloak-user # Nome do Secret gerado pelo PGO.
+      name: camunda-pg-cluster-pguser-keycloak # Nome do Secret gerado pelo PGO.
       key: password  # Chave padrão usada pelo PGO para a senha.
 
   # --- CONFIGURAÇÃO DE REDE E INGRESS ---
