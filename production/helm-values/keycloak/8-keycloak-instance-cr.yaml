@@ -39,9 +39,6 @@ spec:
   http:
     # O cert-manager usará esta configuração para criar e gerenciar o secret TLS para o Ingress.
     tlsSecret: auth-consultorunicoon-com-br-tls
-    # Habilita o endpoint de health na porta http (8080)
-    health:
-      enabled: true
 
   # --- CONFIGURAÇÃO PARA AMBIENTE K3S SINGLE-NODE ---
   unsupported:
