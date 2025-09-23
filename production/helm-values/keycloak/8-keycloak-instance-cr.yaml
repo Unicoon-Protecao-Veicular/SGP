@@ -49,3 +49,27 @@ spec:
           - key: "node-role.kubernetes.io/master"
             operator: "Exists"
             effect: "NoSchedule"
+        containers:
+          - name: keycloak
+            env:
+              - name: KC_PROXY
+                value: edge
+            startupProbe:
+              httpGet:
+                path: /health/ready
+                port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 1
+              failureThreshold: 60
+            readinessProbe:
+              httpGet:
+                path: /health/ready
+                port: 8080
+              initialDelaySeconds: 10
+              periodSeconds: 10
+            livenessProbe:
+              httpGet:
+                path: /health/live
+                port: 8080
+              initialDelaySeconds: 60
+              periodSeconds: 10
