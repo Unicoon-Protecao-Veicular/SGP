@@ -20,12 +20,10 @@ spec:
     port: 5432
     database: keycloak # O banco de dados para o Keycloak.
     # O 'usernameSecret' e 'passwordSecret' apontam para o Secret que contém as credenciais do DB.
-    usernameSecret:
-      name: camunda-credentials # Nome do Secret não selado no cluster.
-      key: keycloak-db-user    # Chave dentro do Secret com o nome de usuário do DB.
+    username: keycloak
     passwordSecret:
-      name: camunda-credentials # Nome do Secret não selado no cluster.
-      key: keycloak-db-password  # Chave dentro do Secret com a senha do DB.
+      name: camunda-pg-cluster-keycloak-user # Nome do Secret gerado pelo PGO.
+      key: password  # Chave padrão usada pelo PGO para a senha.
 
   # --- CONFIGURAÇÃO DE REDE E INGRESS ---
   hostname:
