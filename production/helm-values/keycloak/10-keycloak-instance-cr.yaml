@@ -45,6 +45,10 @@ spec:
             env:
               - name: KC_PROXY
                 value: edge
+              - name: KC_HTTP_ENABLED
+                value: "true"
+              - name: KC_HTTPS_PORT
+                value: "-1"
             startupProbe:
               httpGet:
                 path: /health/ready
