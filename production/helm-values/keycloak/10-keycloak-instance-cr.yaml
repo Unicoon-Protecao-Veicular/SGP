@@ -4,7 +4,7 @@ apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
   name: keycloak
-  namespace: camunda
+  namespace: keycloak
   annotations:
     # Wave 10: Cria a instância do Keycloak DEPOIS que o operator está pronto.
     argocd.argoproj.io/sync-wave: "10"
@@ -22,21 +22,12 @@ spec:
     # O 'usernameSecret' e 'passwordSecret' apontam para o Secret que contém as credenciais do DB.
     username: keycloak
     passwordSecret:
-      name: camunda-pg-cluster-keycloak-user # Nome do Secret gerado pelo PGO.
+      name: keycloak-db-secret # Nome do Secret gerado pelo PGO.
       key: password  # Chave padrão usada pelo PGO para a senha.
 
   # --- CONFIGURAÇÃO DE REDE E INGRESS ---
-  hostname:
-    # O hostname público para acessar o Keycloak.
-    hostname: auth.consultorunicoon.com.br
   ingress:
-    enabled: true
-    className: nginx # Certifique-se que o Ingress Controller Nginx está instalado.
-    annotations:
-      "cert-manager.io/cluster-issuer": "letsencrypt-prod" # Certifique-se que o cert-manager e o ClusterIssuer existem.
-  http:
-    # O cert-manager usará esta configuração para criar e gerenciar o secret TLS para o Ingress.
-    tlsSecret: auth-consultorunicoon-com-br-tls
+    enabled: false
 
   # --- CONFIGURAÇÃO PARA AMBIENTE K3S SINGLE-NODE ---
   unsupported:

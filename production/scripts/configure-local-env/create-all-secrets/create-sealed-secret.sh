@@ -85,3 +85,37 @@ log "Sucesso! SealedSecret consolidado gerado em:"
 log "$OUTPUT_FILE"
 echo ""
 echo "Próximo passo: Faça o commit e push de '$OUTPUT_FILE' para seu repositório Git."
+
+# --- Criação do SealedSecret para o Keycloak ---
+log "Gerando SealedSecret para o Keycloak..."
+
+KEYCLOAK_SECRET_NAME="keycloak-db-secret"
+KEYCLOAK_NAMESPACE="keycloak"
+KEYCLOAK_OUTPUT_FILE="$SECRETS_DIR/sealed-keycloak-credentials.yaml"
+KEYCLOAK_TMP_SECRET_FILE=$(mktemp)
+
+# Garante a limpeza do arquivo temporário ao sair
+trap 'rm -f "$KEYCLOAK_TMP_SECRET_FILE"' EXIT
+
+# Reutiliza a senha do banco de dados do Keycloak gerada anteriormente
+log "Utilizando a senha do banco de dados do Keycloak já gerada..."
+
+cat > "$KEYCLOAK_TMP_SECRET_FILE" <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: $KEYCLOAK_SECRET_NAME
+  namespace: $KEYCLOAK_NAMESPACE
+type: Opaque
+data:
+  username: $(echo -n "keycloak" | base64)
+  password: $(echo -n "$KEYCLOAK_DB_PASSWORD" | base64)
+EOF
+
+log "Manifesto do Secret temporário do Keycloak criado em $KEYCLOAK_TMP_SECRET_FILE."
+
+log "Selando o secret do Keycloak com kubeseal..."
+kubeseal --controller-name sealed-secrets --format=yaml < "$KEYCLOAK_TMP_SECRET_FILE" > "$KEYCLOAK_OUTPUT_FILE"
+
+log "Sucesso! SealedSecret do Keycloak gerado em:"
+log "$KEYCLOAK_OUTPUT_FILE"

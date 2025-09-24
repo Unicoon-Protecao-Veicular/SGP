@@ -105,16 +105,18 @@ bash "$SCRIPT_DIR/configure-local-env/create-all-secrets.sh"
 log "Preparando commit no Git"
 CAMUNDA_SECRET_PATH="$ROOT_DIR/production/k8s/secrets/sealed-camunda-credentials.yaml"
 GRAFANA_SECRET_PATH="$ROOT_DIR/production/k8s/secrets/sealed-grafana-credentials.yaml"
+KEYCLOAK_SECRET_PATH="$ROOT_DIR/production/k8s/secrets/sealed-keycloak-credentials.yaml"
 
 info "Adicionando arquivos gerados ao Git..."
 git add "$ISSUER_OUTPUT"
 git add "$CAMUNDA_SECRET_PATH"
 git add "$GRAFANA_SECRET_PATH"
+git add "$KEYCLOAK_SECRET_PATH"
 
 COMMIT_MSG="feat: Configure local environment and generate secrets
 
 - Configura os ClusterIssuers para Let's Encrypt.
-- Gera e criptografa os segredos para Camunda e Grafana."
+- Gera e criptografa os segredos para Camunda, Grafana e Keycloak."
 
 info "Criando commit..."
 git commit -m "$COMMIT_MSG"
@@ -124,6 +126,8 @@ log "Processo concluído com sucesso!"
 echo
 info "Um commit foi criado com todos os arquivos de configuração necessários."
 info "Para finalizar, execute o seguinte comando para enviar as mudanças para o repositório:"
+
 echo
+
 echo -e "  \033[1;34mgit push\033[0m"
 echo
