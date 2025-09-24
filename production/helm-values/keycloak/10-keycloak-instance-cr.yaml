@@ -26,6 +26,8 @@ spec:
       key: password  # Chave padrão usada pelo PGO para a senha.
 
   # --- CONFIGURAÇÃO DE REDE E INGRESS ---
+  hostname:
+    hostname: auth.consultorunicoon.com.br
   ingress:
     enabled: false
 
