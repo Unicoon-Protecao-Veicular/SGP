@@ -6,6 +6,15 @@ BASE_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 echo "Applying base namespaces..."
 kubectl apply -f "$BASE_DIR/production/k8s/namespaces.yaml"
 
+echo "Waiting for namespaces to be created..."
+for ns in camunda keycloak monitoring; do
+  echo "  - Waiting for namespace $ns..."
+  until kubectl get ns "$ns" &> /dev/null; do
+    sleep 1
+  done
+  echo "    Namespace $ns found."
+done
+
 echo "Installing Argo CD project and app-of-apps..."
 kubectl apply -f "$BASE_DIR/production/argocd/project.yaml"
 kubectl apply -f "$BASE_DIR/production/argocd/app-of-apps.yaml"
