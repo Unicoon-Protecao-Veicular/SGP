@@ -11,3 +11,9 @@ kubectl apply -f "$BASE_DIR/production/argocd/project.yaml"
 kubectl apply -f "$BASE_DIR/production/argocd/app-of-apps.yaml"
 
 echo "Done. Argo CD will now reconcile child apps (longhorn, ingress-nginx, monitoring, camunda)."
+echo
+echo "Aguarde alguns minutos para que os serviços principais sejam implantados pelo ArgoCD."
+echo "Próximo passo: aplique os Ingresses da aplicação para expor os serviços:"
+echo
+echo "  kubectl apply -f production/k8s/ingress/"
+echo

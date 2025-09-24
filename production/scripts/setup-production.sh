@@ -24,4 +24,4 @@ echo "==> Configuring Argo CD Repository Access (SSH)"
 bash "$(dirname "$0")/setup-production/configure-argocd-repo.sh"
 
 echo "All set! A base do ambiente está pronta."
-echo "Próximo passo: execute 'bash production/scripts/bootstrap-apps.sh' para que o Argo CD instale todas as aplicações."
+echo "Próximo passo: execute 'bash production/scripts/configure-local-env.sh' na sua máquina local para configurar o acesso ao cluster e gerar os segredos."
