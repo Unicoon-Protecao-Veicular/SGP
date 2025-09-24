@@ -19,7 +19,7 @@ spec:
     targetRevision: feat/new-architecture
   destination:
     server: https://kubernetes.default.svc
-    namespace: camunda
+    namespace: keycloak
   syncPolicy:
     automated:
       prune: true

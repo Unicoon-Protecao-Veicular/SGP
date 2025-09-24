@@ -27,8 +27,8 @@ spec:
             effect: "NoSchedule"
   destination:
     server: https://kubernetes.default.svc
-    # O operator será instalado no namespace 'camunda' para gerenciar a instância no mesmo local.
-    namespace: camunda
+    # O operator será instalado no namespace 'keycloak' para gerenciar a instância no mesmo local.
+    namespace: keycloak
   syncPolicy:
     automated:
       prune: true
