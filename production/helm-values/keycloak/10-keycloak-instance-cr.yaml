@@ -6,8 +6,8 @@ metadata:
   name: keycloak
   namespace: camunda
   annotations:
-    # Wave 8: Cria a instância do Keycloak DEPOIS que o operator está pronto.
-    argocd.argoproj.io/sync-wave: "8"
+    # Wave 10: Cria a instância do Keycloak DEPOIS que o operator está pronto.
+    argocd.argoproj.io/sync-wave: "10"
 spec:
   instances: 1
   db:
