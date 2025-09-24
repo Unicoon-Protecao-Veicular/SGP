@@ -3,7 +3,7 @@
 apiVersion: k8s.keycloak.org/v2alpha1
 kind: Keycloak
 metadata:
-  name: keycloak
+  name: keycloak-instance
   namespace: keycloak
   annotations:
     # Wave 10: Cria a instância do Keycloak DEPOIS que o operator está pronto.
@@ -25,6 +25,17 @@ spec:
       name: keycloak-db-secret # Nome do Secret gerado pelo PGO.
       key: password  # Chave padrão usada pelo PGO para a senha.
 
+
+# --- CONFIGURAÇÃO DE REDE E PROXY (AJUSTADA) ---
+
+  # ALTERAÇÃO 2: Adicionada a seção 'additionalOptions'.
+  # MOTIVO: Esta é a correção principal. Ela instrui o Keycloak a operar em
+  # modo 'edge', fazendo com que ele confie nos cabeçalhos (headers) X-Forwarded-*
+  # enviados pelo Ingress NGINX. Isso garante que o Keycloak gere as URLs
+  # públicas corretas para redirects e links.
+  additionalOptions:
+    - name: proxy
+      value: edge
   # --- CONFIGURAÇÃO DE REDE E INGRESS ---
   hostname:
     hostname: auth.consultorunicoon.com.br
