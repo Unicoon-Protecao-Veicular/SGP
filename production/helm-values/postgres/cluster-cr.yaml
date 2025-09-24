@@ -38,11 +38,13 @@ spec:
                   storage: 20Gi
               storageClassName: longhorn
   users:
-    # Cria o usuário para o Keycloak. A senha será gerenciada pelo PGO.
-    # O PGO criará um Secret chamado 'camunda-pg-cluster-keycloak-user' com a senha.
+    # Faz o PGO usar uma senha customizada para o usuário do Keycloak,
+    # que está definida no Secret 'keycloak-db-secret'.
     - name: keycloak
       databases:
       - keycloak
+      password:
+        source: keycloak-db-secret
       options: "SUPERUSER" # Necessário para o Keycloak gerenciar o schema
   # Expõe o serviço primário do cluster
   proxy:
