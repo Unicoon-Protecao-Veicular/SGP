@@ -38,6 +38,8 @@ spec:
       value: edge
     - name: http-port
       value: "9000"
+    - name: http-enabled
+      value: "true"
   # --- CONFIGURAÇÃO DE REDE E INGRESS ---
   hostname:
     hostname: auth.consultorunicoon.com.br
