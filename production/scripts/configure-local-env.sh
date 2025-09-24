@@ -99,7 +99,7 @@ envsubst < "$ISSUER_TEMPLATE" > "$ISSUER_OUTPUT"
 # 2. Segredos
 log "Gerando segredos criptografados (Sealed Secrets)"
 info "Isso pode demorar um pouco, pois depende da comunicação com o cluster..."
-bash "$SCRIPT_DIR/create-all-secrets.sh"
+bash "$SCRIPT_DIR/configure-local-env/create-all-secrets.sh"
 
 # --- Preparação do Commit ---
 log "Preparando commit no Git"
