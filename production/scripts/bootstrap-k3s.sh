@@ -4,7 +4,18 @@ set -euo pipefail
 # Install k3s on Ubuntu and prepare kubectl access.
 # Disables Traefik to use nginx-ingress via Helm.
 
-if ! command -v curl >/dev/null 2>&1; then
+if ! command -v curl >/dev/null 2>&1;
+then
+  echo "Waiting for apt lock to be released..."
+  while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+        sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+        sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+        sudo fuser /var/cache/apt/archives/lock >/dev/null 2>&1;
+  do
+    echo "Another process is holding the apt lock. Waiting 10 seconds..."
+    sleep 10
+  done
+  echo "Apt lock released."
   sudo apt-get update -y
   sudo apt-get install -y curl
 fi
@@ -34,6 +45,18 @@ fi
 
 # Longhorn prerequisites on Ubuntu (iSCSI + NFS client)
 echo "Installing Longhorn prerequisites (open-iscsi, nfs-common)..."
+
+echo "Waiting for apt lock to be released..."
+while sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || \
+      sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1 || \
+      sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || \
+      sudo fuser /var/cache/apt/archives/lock >/dev/null 2>&1;
+do
+  echo "Another process is holding the apt lock. Waiting 10 seconds..."
+  sleep 10
+done
+echo "Apt lock released."
+
 sudo apt-get update -y
 sudo apt-get install -y open-iscsi nfs-common
 sudo systemctl enable --now iscsid || true
