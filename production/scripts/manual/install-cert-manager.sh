@@ -5,7 +5,7 @@ set -euo pipefail
 # Pré-requisitos: Argo CD já instalado e saudável.
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-ROOT=$(cd "$HERE/../.." && pwd)
+ROOT=$(cd "$HERE/../../.." && pwd)
 
 echo "[cert-manager] Aplicando Application do Argo CD..."
 kubectl apply -f "$ROOT/production/argocd/apps/cert-manager.yaml"

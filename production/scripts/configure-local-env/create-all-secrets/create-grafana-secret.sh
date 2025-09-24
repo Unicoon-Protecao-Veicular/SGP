@@ -20,7 +20,7 @@ log "Dependências verificadas."
 # --- Configurações ---
 SECRET_NAME="grafana-admin"
 NAMESPACE="monitoring"
-SECRETS_DIR="$(cd "$(dirname "$0")/../k8s/secrets" && pwd)"
+SECRETS_DIR="$(cd "$(dirname "$0")/../../../k8s/secrets" && pwd)"
 OUTPUT_FILE="$SECRETS_DIR/sealed-grafana-credentials.yaml"
 TMP_SECRET_FILE=$(mktemp)
 

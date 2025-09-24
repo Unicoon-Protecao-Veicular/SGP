@@ -16,7 +16,7 @@ command -v envsubst >/dev/null 2>&1 || {
 }
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-ROOT=$(cd "$HERE/../.." && pwd)
+ROOT=$(cd "$HERE/../../.." && pwd)
 TPL="$ROOT/production/k8s/cert-manager/cluster-issuers.yaml.tpl"
 
 if [[ ! -f "$TPL" ]]; then
