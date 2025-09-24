@@ -36,6 +36,8 @@ spec:
   additionalOptions:
     - name: proxy
       value: edge
+    - name: http-port
+      value: "9000"
   # --- CONFIGURAÇÃO DE REDE E INGRESS ---
   hostname:
     hostname: auth.consultorunicoon.com.br
