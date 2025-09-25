@@ -11,7 +11,6 @@ spec:
   postgresVersion: 15 
   databases:
   - name: keycloak
-    owner: keycloak
   instances:
     - name: instance1
       replicas: 1 # Apenas uma instância para ambiente de nó único
