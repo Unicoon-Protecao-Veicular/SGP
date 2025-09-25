@@ -16,11 +16,15 @@ spec:
     vendor: postgres
     # O 'host' deve ser o nome do serviço do seu cluster Postgres (PGO).
     # O formato padrão é: <cluster-name>-pgbouncer.<namespace>.svc.cluster.local
-    host: camunda-pg-cluster-pgbouncer.camunda.svc.cluster.local
+    host: camunda-pg-cluster-pgbouncer.keycloak.svc.cluster.local
     port: 5432
     database: keycloak # O banco de dados para o Keycloak.
     # O 'usernameSecret' e 'passwordSecret' apontam para o Secret que contém as credenciais do DB.
-    username: keycloak
+    # Colocamos o username também como uma referência a um Secret para que o operator
+    # não normalize/remoção o campo inline — isto mantém o recurso sincronizável.
+    usernameSecret:
+      name: keycloak-db-secret
+      key: username
     passwordSecret:
       name: keycloak-db-secret # Nome do Secret gerado pelo PGO.
       key: password  # Chave padrão usada pelo PGO para a senha.
