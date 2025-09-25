@@ -10,6 +10,7 @@ spec:
   - name: keycloak
     databases:
     - keycloak
+    options: "SUPERUSER"
   instances:
     - name: instance1
       replicas: 1 # Apenas uma instância para ambiente de nó único
