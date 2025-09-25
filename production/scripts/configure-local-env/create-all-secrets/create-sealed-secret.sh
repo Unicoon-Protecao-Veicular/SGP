@@ -89,7 +89,7 @@ echo "Próximo passo: Faça o commit e push de '$OUTPUT_FILE' para seu repositó
 # --- Criação do SealedSecret para o Keycloak ---
 log "Gerando SealedSecret para o Keycloak..."
 
-KEYCLOAK_SECRET_NAME="camunda-pg-cluster-pguser-keycloak"
+KEYCLOAK_SECRET_NAME="keycloak-db-secret"
 KEYCLOAK_NAMESPACE="keycloak"
 KEYCLOAK_OUTPUT_FILE="$SECRETS_DIR/sealed-keycloak-credentials.yaml"
 KEYCLOAK_TMP_SECRET_FILE=$(mktemp)
@@ -106,9 +106,13 @@ kind: Secret
 metadata:
   name: $KEYCLOAK_SECRET_NAME
   namespace: $KEYCLOAK_NAMESPACE
+  labels:
+    postgres-operator.crunchydata.com/cluster: "camunda-pg-cluster"
+    postgres-operator.crunchydata.com/pguser: "keycloak"
 type: Opaque
 data:
   user: $(echo -n "keycloak" | base64)
+  username: $(echo -n "keycloak" | base64)
   password: $(echo -n "$KEYCLOAK_DB_PASSWORD" | base64)
 EOF
 
