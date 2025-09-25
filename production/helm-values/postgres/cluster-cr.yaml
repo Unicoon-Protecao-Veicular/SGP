@@ -4,13 +4,13 @@ apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
   name: camunda-pg-cluster
-  annotations:
-    # Habilita a funcionalidade de criação de usuários a partir de segredos pré-existentes.
-    postgres-operator.crunchydata.com/users-from-secret: "true"
 spec:
   postgresVersion: 15 
-  databases:
-  - name: keycloak  # Cria o banco de dados 'keycloak' necessário para o Keycloak
+  users:
+  - name: keycloak
+    databases:
+    - keycloak
+    options: "SUPERUSER"
   instances:
     - name: instance1
       replicas: 1 # Apenas uma instância para ambiente de nó único
