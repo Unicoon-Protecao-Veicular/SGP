@@ -23,10 +23,10 @@ spec:
     # Colocamos o username também como uma referência a um Secret para que o operator
     # não normalize/remoção o campo inline — isto mantém o recurso sincronizável.
     usernameSecret:
-      name: keycloak-db-secret
-      key: username
+      name: camunda-pg-cluster-pguser-keycloak
+      key: user
     passwordSecret:
-      name: keycloak-db-secret # Nome do Secret gerado pelo PGO.
+      name: camunda-pg-cluster-pguser-keycloak # Nome do Secret gerado pelo PGO.
       key: password  # Chave padrão usada pelo PGO para a senha.
 
 

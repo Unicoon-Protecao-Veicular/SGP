@@ -4,13 +4,12 @@ apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
   name: camunda-pg-cluster
-  annotations:
-    # Aponta para um segredo existente que contém as credenciais do usuário
-    postgres-operator.crunchydata.com/users-from-secret: "keycloak-db-secret"
 spec:
   postgresVersion: 15 
-  databases:
+  users:
   - name: keycloak
+    databases:
+    - keycloak
   instances:
     - name: instance1
       replicas: 1 # Apenas uma instância para ambiente de nó único
