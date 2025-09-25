@@ -16,7 +16,7 @@ spec:
     targetRevision: feat/new-architecture
   destination:
     server: https://kubernetes.default.svc
-    namespace: camunda # O cluster será criado no mesmo namespace do Camunda e Keycloak
+    namespace: keycloak # O cluster será criado no mesmo namespace do Camunda e Keycloak
   syncPolicy:
     automated:
       prune: true

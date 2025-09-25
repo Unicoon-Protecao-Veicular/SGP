@@ -9,8 +9,6 @@ metadata:
     postgres-operator.crunchydata.com/users-from-secret: "keycloak-db-secret"
 spec:
   postgresVersion: 15 
-  databases:
-  - name: keycloak
   instances:
     - name: instance1
       replicas: 1 # Apenas uma instância para ambiente de nó único
