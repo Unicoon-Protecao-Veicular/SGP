@@ -4,9 +4,13 @@ apiVersion: postgres-operator.crunchydata.com/v1beta1
 kind: PostgresCluster
 metadata:
   name: camunda-pg-cluster
-  namespace: camunda
+  annotations:
+    # Aponta para um segredo existente que contém as credenciais do usuário
+    postgres-operator.crunchydata.com/users-from-secret: "keycloak-db-secret"
 spec:
-  postgresVersion: 15
+  postgresVersion: 15 
+  databases:
+  - name: keycloak
   instances:
     - name: instance1
       replicas: 1 # Apenas uma instância para ambiente de nó único
@@ -37,16 +41,6 @@ spec:
                 requests:
                   storage: 20Gi
               storageClassName: longhorn
-  users:
-    # Faz o PGO usar uma senha customizada para o usuário do Keycloak,
-    # que está definida no Secret 'keycloak-db-secret'.
-    - name: keycloak
-      databases:
-      - keycloak
-      password:
-        source: keycloak-db-secret
-      options: "SUPERUSER" # Necessário para o Keycloak gerenciar o schema
-  # Expõe o serviço primário do cluster
   proxy:
     pgBouncer:
       replicas: 1
