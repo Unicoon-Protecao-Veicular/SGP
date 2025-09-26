@@ -3,6 +3,9 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: reflector
+  annotations:
+    # Wave 5: Monitoramento pode ser instalado após a infraestrutura principal.
+    argocd.argoproj.io/sync-wave: "5"
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
