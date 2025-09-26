@@ -1,7 +1,0 @@
-# production/helm-values/postgres/kustomization.yaml
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - cluster-cr.yaml
-  # Adicione o novo segredo espelhado aqui
-  - adoptable-secret-mirror.yaml
