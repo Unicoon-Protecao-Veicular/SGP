@@ -4,4 +4,4 @@ kind: Kustomization
 resources:
   - cluster-cr.yaml
   # Adicione o novo segredo espelhado aqui
-  - ../../k8s/postgres/adoptable-secret-mirror.yaml
+  - adoptable-secret-mirror.yaml
