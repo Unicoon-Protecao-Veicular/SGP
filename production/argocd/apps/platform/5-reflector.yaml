@@ -14,7 +14,7 @@ spec:
   source:
     repoURL: 'https://emberstack.github.io/helm-charts'
     chart: reflector
-    targetRevision: 7.1.20 # Use a versão estável mais recente
+    targetRevision: 9.1.31 # Use a versão estável mais recente
   destination:
     server: https://kubernetes.default.svc
     # O Reflector geralmente é instalado em kube-system ou em um namespace de ferramentas
