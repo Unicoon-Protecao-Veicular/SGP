@@ -89,7 +89,7 @@ echo "Próximo passo: Faça o commit e push de '$OUTPUT_FILE' para seu repositó
 # --- Criação do SealedSecret para o Keycloak ---
 log "Gerando SealedSecret para o Keycloak..."
 
-KEYCLOAK_SECRET_NAME="camunda-pg-cluster-pguser-keycloak"
+KEYCLOAK_SECRET_NAME="keycloak-password-source"
 KEYCLOAK_NAMESPACE="keycloak"
 KEYCLOAK_OUTPUT_FILE="$SECRETS_DIR/sealed-keycloak-credentials.yaml"
 KEYCLOAK_TMP_SECRET_FILE=$(mktemp)
